@@ -88,8 +88,6 @@ select{font-family:inherit;font-size:17px;font-weight:800;border-radius:10px;bor
 .overlay input[type=checkbox]{width:auto;vertical-align:middle}
 .qBtn{width:34px;height:34px;border-radius:50%;border:3px solid #fff;background:rgba(255,255,255,.45);font-size:16px;line-height:1;padding:0;cursor:pointer;vertical-align:middle;margin-top:16px}
 .row .qBtn{margin-top:0}
-.big.small{font-size:16px;padding:4px 16px;box-shadow:0 4px 0 #aab}
-#netLogBox{position:fixed;left:8px;right:8px;bottom:8px;max-height:45vh;overflow:auto;margin:0;padding:8px 10px;background:rgba(0,0,0,.88);color:#9f9;font:12px/1.35 monospace;border-radius:10px;z-index:60;white-space:pre-wrap;user-select:text;-webkit-user-select:text}
 #tutBox{background:rgba(255,255,255,.92);border-radius:20px;padding:12px 22px 14px;max-width:540px;color:#1d2340;text-align:center}
 #tutIcon{font-size:48px;line-height:1.1}
 #tutBox h2{margin:2px 0 6px;font-size:28px}
@@ -206,10 +204,8 @@ select{font-family:inherit;font-size:17px;font-weight:800;border-radius:10px;bor
     <button id="tutHelp" class="big alt">Como jogar online? ❓</button>
     <button id="onlineBack" class="big alt">Voltar</button>
   </div>
-  <button class="big alt small logBtn">📋 Registro da conexão</button>
 </div>
 
-<pre id="netLogBox" class="hidden"></pre>
 
 <div id="tutorial" class="overlay hidden">
   <div id="tutBox">
@@ -245,7 +241,6 @@ select{font-family:inherit;font-size:17px;font-weight:800;border-radius:10px;bor
     <button id="lobbyStart" class="big hidden">COMEÇAR!</button>
     <button id="lobbyLeave" class="big alt">Sair da sala</button>
   </div>
-  <button class="big alt small logBtn">📋 Registro da conexão</button>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -311,6 +306,9 @@ const CHARS = [
   {name:'João Victor', file:'João Victor', eye:'#3d7fd1', hair:'#a8843f', shirt:'#f4f4f4', boy:true},
   // cabelo castanho com pontas loiras (tip), cores tiradas de fotos/Julia.jpeg; blusa roxa
   {name:'Julia',      file:'Julia',      eye:'#5a3a24', hair:'#6b4a2e', tip:'#d8b07a', shirt:'#8e44d6'},
+  // personagens pra convidados (sem foto, só pixel art)
+  {name:'Pedrinho',   file:'Pedrinho',   eye:EYE_B, hair:'#3fae3f', shirt:'#ff7a1a', boy:true},
+  {name:'Maria',      file:'Maria',      eye:EYE_B, hair:'#d0302a', shirt:'#20a4e8'},
 ];
 CHARS.forEach(c => c.kart = '#888888');   // cor provisória; a de verdade é sorteada a cada corrida
 
@@ -1764,26 +1762,13 @@ const roomLink = () => location.href.split(/[?#]/)[0] + '?sala=' + Net.room;
 function onlineMsg(t){ $('#onlineMsg').textContent = t; if (t) netLog('tela:', t); }
 function lobbyStatus(t){ $('#lobbyStatus').textContent = t; netLog('tela:', t); }
 
-// registro da conexão
-const GAME_VERSION = '2026-11-10 p';   // aumentar a cada mudança, pra saber se o aparelho pegou a versão nova
-const NET_LOG = ['Breder Kart versão ' + GAME_VERSION];
-if (TURN_USERNAME.startsWith('COLE_AQUI')) NET_LOG.push('⚠️ TURN sem senha: cole o username e a credential da Metered no index.html');
+// registro da conexão: só no Console (F12), pra investigar problemas
+const GAME_VERSION = '2026-11-10 r';   // aumentar a cada mudança, pra saber se o aparelho pegou a versão nova
+console.log('Breder Kart versão ' + GAME_VERSION);
 function netLog(...a){
-  const line = new Date().toLocaleTimeString() + ' ' + a.join(' ');
-  console.log('%c[online]', 'color:#d6247a;font-weight:bold', line);
-  NET_LOG.push(line);
-  if (NET_LOG.length > 80) NET_LOG.splice(1, 1);  
-  if (!$('#netLogBox').classList.contains('hidden')) showNetLog();
+  console.log('%c[online]', 'color:#d6247a;font-weight:bold', new Date().toLocaleTimeString() + ' ' + a.join(' '));
 }
-function showNetLog(){
-  const box = $('#netLogBox');
-  box.textContent = NET_LOG.join('\n') + '\n\n(toque aqui pra fechar)';
-  box.classList.remove('hidden');
-  box.scrollTop = box.scrollHeight;
-}
-document.querySelectorAll('.logBtn').forEach(b => b.addEventListener('click', showNetLog));
-$('#netLogBox').addEventListener('click', () => $('#netLogBox').classList.add('hidden'));
-// mostra no registro o que o TURN respondeu (relay = caminho pelo TURN funcionou;
+// mostra no Console o que o TURN respondeu (relay = caminho pelo TURN funcionou;
 // erro 401 = senha recusada; 701 = endereço do TURN não respondeu)
 function watchIce(conn, who){
   const pc = conn.peerConnection;
@@ -2131,7 +2116,7 @@ function startOnlineRace(go){
   Race.lastCount = 4;
   Race.state = 'count';
 
-  ['#lobby', '#results', '#netLogBox'].forEach(s => $(s).classList.add('hidden'));
+  ['#lobby', '#results'].forEach(s => $(s).classList.add('hidden'));
   $('#hud').classList.remove('hidden');
   $('#touch').classList.toggle('hidden', !isTouch);
   $('#itemIcon').textContent = '';
