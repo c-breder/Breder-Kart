@@ -81,7 +81,7 @@ select{font-family:inherit;font-size:17px;font-weight:800;border-radius:10px;bor
 .big:active{transform:translateY(4px);box-shadow:0 2px 0 #c48b00}
 .big.alt{background:#fff;box-shadow:0 6px 0 #aab;font-size:22px}
 .hint{font-size:15px;font-weight:600;text-align:center;margin-top:14px;max-width:520px}
-#resList{background:rgba(255,255,255,.92);border-radius:20px;padding:10px 18px;min-width:280px;margin-top:10px}
+#resList,#lobbyList{background:rgba(255,255,255,.92);border-radius:20px;padding:10px 18px;min-width:280px;margin-top:10px}
 .resRow{display:flex;align-items:center;gap:10px;font-size:20px;font-weight:800;color:#1d2340;padding:4px 0}
 .resRow .p{width:42px;font-size:26px}
 .resRow .av{width:44px;height:44px;border-radius:50%;overflow:hidden;display:inline-block;flex:none}
@@ -91,6 +91,25 @@ select{font-family:inherit;font-size:17px;font-weight:800;border-radius:10px;bor
 .resRow.me{color:#d6247a}
 #resMsg{font-size:24px;text-align:center;margin-top:6px}
 .btns{display:flex;gap:12px;flex-wrap:wrap;justify-content:center}
+.overlay input{font-family:inherit;font-size:17px;font-weight:800;border-radius:10px;border:3px solid #fff;padding:2px 8px;width:170px;color:#000;background:#fff;user-select:text;-webkit-user-select:text}
+.big:disabled{opacity:.5;cursor:default;transform:none}
+.overlay input[type=checkbox]{width:auto;vertical-align:middle}
+/* tutorial do online */
+#tutBox{background:rgba(255,255,255,.92);border-radius:20px;padding:12px 22px 14px;max-width:540px;color:#1d2340;text-align:center}
+#tutIcon{font-size:48px;line-height:1.1}
+#tutBox h2{margin:2px 0 6px;font-size:28px}
+#tutBox p{margin:0;font-size:18px;font-weight:600}
+#tutDots{margin-top:8px;font-size:16px;letter-spacing:4px;color:#d6247a}
+/* sala de espera: cartões menores pra caber no celular deitado */
+#lobbyCards{display:flex;gap:22px 8px;flex-wrap:wrap;justify-content:center;margin-top:6px;padding-top:12px}
+#lobbyCards .card{width:100px;padding:6px 6px 8px;border-radius:16px;position:relative}
+/* coroa em cima do cartão do dono da sala */
+.card .crown{position:absolute;top:-20px;left:50%;transform:translateX(-50%) rotate(-12deg);font-size:30px;line-height:1;filter:drop-shadow(0 2px 0 #1d2340)}
+#lobbyCards .card svg{width:84px;margin:0 auto 4px}
+#lobbyCards .card .ph{width:84px;height:100px;margin:0 auto 4px}
+.card .nm{font-size:15px;font-weight:800;color:#000;line-height:1.1}
+.card .who{font-size:13px;font-weight:800;color:#d6247a;min-height:16px}
+.card.taken{opacity:.45;cursor:default}
 </style>
 </head>
 <body>
@@ -114,8 +133,18 @@ select{font-family:inherit;font-size:17px;font-weight:800;border-radius:10px;bor
 <!-- Aviso pra girar o celular (só aparece em pé) -->
 <div id="rotate" class="out">Gire o celular 🔄</div>
 
+<!-- Abertura: offline ou online -->
+<div id="start" class="overlay">
+  <h1 class="out">Breder Kart 🏁</h1>
+  <div class="sub out">Como você quer jogar?</div>
+  <div class="btns">
+    <button id="playOffline" class="big">OFFLINE 🏠</button>
+    <button id="playOnline" class="big">ONLINE 🌐</button>
+  </div>
+</div>
+
 <!-- Menu -->
-<div id="menu" class="overlay">
+<div id="menu" class="overlay hidden">
   <h1 class="out">Breder Kart 🏁</h1>
   <div class="sub out">Escolha quem você vai ser e contra quem quer correr!</div>
   <div id="cards"></div>
@@ -134,6 +163,7 @@ select{font-family:inherit;font-size:17px;font-weight:800;border-radius:10px;bor
     <select id="laps"><option>1</option><option>2</option><option selected>3</option><option>5</option></select>
   </div>
   <button id="go" class="big">CORRER!</button>
+  <button id="menuBack" class="big alt">Voltar</button>
   <div class="hint out" id="hint"></div>
 </div>
 
@@ -148,7 +178,73 @@ select{font-family:inherit;font-size:17px;font-weight:800;border-radius:10px;bor
   </div>
 </div>
 
+<!-- Online -->
+<div id="onlineMenu" class="overlay hidden">
+  <h1 class="out">Jogar online 🌐</h1>
+  <div class="sub out">Até 5 pessoas por sala</div>
+  <div id="onlineMsg" class="hint out"></div>
+
+  <button id="openRoom" class="big">SALA ABERTA</button>
+
+  <div class="row out">Criar sala:
+    <select id="roomType">
+      <option value="link">Só com link</option>
+      <option value="password">Com senha</option>
+    </select>
+    <input id="newPass" type="password" placeholder="senha" class="hidden">
+  </div>
+  <button id="createRoom" class="big alt">CRIAR SALA</button>
+
+  <div class="row out">Entrar com código:
+    <input id="joinCode" placeholder="K7Q2-M9XA">
+    <input id="joinPass" type="password" placeholder="senha (se tiver)">
+  </div>
+  <button id="joinRoom" class="big alt">ENTRAR</button>
+
+  <div class="btns">
+    <button id="tutHelp" class="big alt">Como jogar online? ❓</button>
+    <button id="onlineBack" class="big alt">Voltar</button>
+  </div>
+</div>
+
+<!-- Tutorial do online -->
+<div id="tutorial" class="overlay hidden">
+  <div id="tutBox">
+    <div id="tutIcon"></div>
+    <h2 id="tutTitle"></h2>
+    <p id="tutText"></p>
+    <div id="tutDots"></div>
+  </div>
+  <div class="btns">
+    <button id="tutPrev" class="big alt">◀ Voltar</button>
+    <button id="tutNext" class="big">Próximo ▶</button>
+  </div>
+  <label class="hint out"><input type="checkbox" id="tutNever"> Não mostrar mais</label>
+  <button id="tutSkip" class="big alt">Pular tutorial</button>
+</div>
+
+<!-- Sala de espera -->
+<div id="lobby" class="overlay hidden">
+  <h1 class="out">Sala de espera</h1>
+  <div id="lobbyStatus" class="sub out"></div>
+  <div id="lobbyShare" class="row out hidden" style="text-align:center">Código: <span id="lobbyCode"></span>
+    <div><button id="copyLink" class="big alt">Enviar link 🔗</button></div>
+  </div>
+  <div id="lobbyPick" class="row out hidden">Escolha seu piloto:</div>
+  <div id="lobbyCards"></div>
+  <div id="lobbyCount" class="row out"></div>
+  <div id="lobbyList"></div>
+  <div id="lobbyHostBox" class="row out hidden">Voltas:
+    <select id="lobbyLaps"><option>1</option><option>2</option><option selected>3</option><option>5</option></select>
+  </div>
+  <div class="btns">
+    <button id="lobbyStart" class="big hidden">COMEÇAR!</button>
+    <button id="lobbyLeave" class="big alt">Sair da sala</button>
+  </div>
+</div>
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="peerjs.min.js"></script>
 <script>
 (function(){
 'use strict';
@@ -178,8 +274,9 @@ function loadPrefs(){
       escolha: Number.isInteger(raw.escolha) ? raw.escolha : 0,
       rivais:  Array.isArray(raw.rivais) ? raw.rivais : null,
       modo:    raw.modo || null,
+      semTutorial: !!raw.semTutorial,
     };
-  } catch { return {nomes:null, escolha:0, rivais:null, modo:null}; }
+  } catch { return {nomes:null, escolha:0, rivais:null, modo:null, semTutorial:false}; }
 }
 function savePrefs(){
   try {
@@ -188,10 +285,12 @@ function savePrefs(){
       escolha: chosen,
       rivais:  rivals,
       modo:    $('#diff').value,
+      semTutorial: skipTutorial,
     }));
   } catch {}
 }
 const prefs = loadPrefs();
+let skipTutorial = prefs.semTutorial;   // marcou "Não mostrar mais" no tutorial do online
 
 /* ============================================================
    2. Personagens
@@ -752,6 +851,18 @@ function nameSprite(text){
   s.renderOrder = 10;
   return s;
 }
+// coroa que fica em cima de quem está em 1º lugar (uma só, muda de kart)
+const crownSprite = (() => {
+  const t = canvasTex(64,64, (g,w,h) => {
+    g.font = '52px sans-serif';
+    g.textAlign = 'center'; g.textBaseline = 'middle';
+    g.fillText('👑', w/2, h/2+4);
+  });
+  const s = new THREE.Sprite(new THREE.SpriteMaterial({map:t, depthTest:false, transparent:true}));
+  s.scale.set(1.8, 1.8, 1);
+  s.renderOrder = 11;
+  return s;
+})();
 const TEX = {};
 function svgTex(svg){
   const m = svg.match(/width="(\d+)" height="(\d+)"/);
@@ -956,7 +1067,7 @@ addEventListener('keydown', e => {
   if (!e.repeat){
     if (e.code === 'Space' || e.code === 'ShiftLeft' || e.code === 'KeyX') useItem(Race.player);
     if (e.code === 'KeyH') honk();
-    if (e.code === 'Enter' && Race.state === 'menu') startRace();
+    if (e.code === 'Enter' && Race.state === 'menu' && !$('#menu').classList.contains('hidden')) startRace();
   }
   keys[e.code] = true;
 });
@@ -1390,6 +1501,337 @@ $('#toMenu').addEventListener('click', () => {
   buildCards();
 });
 
+// troca de tela: esconde todas e mostra só uma
+function showScreen(id){
+  ['#start', '#menu', '#onlineMenu', '#lobby', '#tutorial'].forEach(s => $(s).classList.add('hidden'));
+  $(id).classList.remove('hidden');
+}
+$('#playOffline').addEventListener('click', () => showScreen('#menu'));
+$('#playOnline').addEventListener('click', () => {
+  if (skipTutorial){ onlineMsg(''); showScreen('#onlineMenu'); }
+  else openTutorial();
+});
+$('#menuBack').addEventListener('click', () => showScreen('#start'));
+$('#onlineBack').addEventListener('click', () => showScreen('#start'));
+// campo de senha só aparece em "Com senha"
+$('#roomType').addEventListener('change', () => {
+  $('#newPass').classList.toggle('hidden', $('#roomType').value !== 'password');
+});
+
+/* ============================================================
+   17b. Online (PeerJS) — salas e conexão
+   ============================================================ */
+const NET_PREFIX = 'breder-kart-';   // separa nossas salas das de outros sites no servidor do PeerJS
+const OPEN_ROOM = 'SALA-ABERTA';
+const MAX_PLAYERS = 5;
+// sempre pelo TURN do PeerJS: ninguém vê o IP de ninguém
+const NET_CONFIG = {
+  iceServers: [{
+    urls: ['turn:eu-0.turn.peerjs.com:3478', 'turn:us-0.turn.peerjs.com:3478'],
+    username: 'peerjs', credential: 'peerjsp',
+  }],
+  iceTransportPolicy: 'relay',
+};
+const CODE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';   // sem I, O, 0 e 1 (se confundem)
+
+const Net = {
+  peer: null,    // minha ligação com o PeerJS
+  isHost: false,
+  room: '',      // código da sala
+  pass: '',      // senha (só o dono guarda)
+  guests: [],    // dono: [{conn, num}] dos convidados
+  host: null,    // convidado: conexão com o dono
+  me: 0,         // meu número na sala (1 = dono)
+  players: [],   // [{num, host, ch}]; ch = personagem (-1 = ainda escolhendo)
+  laps: 3,
+  timer: 0,
+};
+
+// código tipo K7Q2-M9XA: 32^8 ≈ 1 trilhão de combinações
+function makeCode(){
+  const b = crypto.getRandomValues(new Uint8Array(8));
+  const s = Array.from(b, x => CODE_CHARS[x % 32]).join('');
+  return s.slice(0, 4) + '-' + s.slice(4);
+}
+// aceita o código ou o link inteiro colado
+function normCode(s){
+  const m = s.match(/sala=([^&#\s]+)/);
+  return (m ? decodeURIComponent(m[1]) : s).trim().toUpperCase();
+}
+const roomLink = () => location.href.split(/[?#]/)[0] + '?sala=' + Net.room;
+
+function onlineMsg(t){ $('#onlineMsg').textContent = t; }
+function lobbyStatus(t){ $('#lobbyStatus').textContent = t; }
+
+function netError(err){
+  switch (err.type){
+    case 'peer-unavailable': return 'Sala não encontrada. Confira o código.';
+    case 'unavailable-id': return 'Esse código já está em uso. Tente criar de novo.';
+    case 'browser-incompatible': return 'Este navegador não tem suporte ao jogo online.';
+    case 'network': case 'server-error': case 'socket-error': case 'socket-closed':
+      return 'Sem conexão com o servidor. Confira a internet.';
+  }
+  return 'Erro na conexão (' + err.type + ').';
+}
+
+// desliga tudo sem mexer na tela; callbacks da conexão antiga passam a ser ignorados
+function netReset(){
+  clearTimeout(Net.timer);
+  const p = Net.peer;
+  Object.assign(Net, {peer:null, isHost:false, room:'', pass:'', guests:[], host:null, me:0, players:[]});
+  if (p) p.destroy();
+}
+function netLeave(msg){
+  netReset();
+  showScreen('#onlineMenu');
+  onlineMsg(msg || '');
+}
+
+function showLobby(status){
+  showScreen('#lobby');
+  lobbyStatus(status);
+  $('#lobbyShare').classList.toggle('hidden', Net.room === OPEN_ROOM);
+  $('#lobbyCode').textContent = Net.room;
+  $('#copyLink').textContent = 'Enviar link 🔗';
+  renderLobby();
+}
+function renderLobby(){
+  const n = Net.players.length;
+  // lista de jogadores
+  const list = $('#lobbyList');
+  list.innerHTML = '';
+  Net.players.forEach(p => {
+    const d = document.createElement('div');
+    d.className = 'resRow' + (p.num === Net.me ? ' me' : '');
+    d.textContent = 'Jogador ' + p.num + (p.host ? ' 👑' : '') + (p.num === Net.me ? ' (você)' : '') +
+      ' — ' + (p.ch >= 0 ? CHARS[p.ch].name : 'escolhendo...');
+    list.appendChild(d);
+  });
+  list.classList.toggle('hidden', !n);
+  $('#lobbyCount').textContent = n ? n + '/' + MAX_PLAYERS + ' jogadores · ' + Net.laps + (Net.laps > 1 ? ' voltas' : ' volta') : '';
+
+  // cartões: o meu mostra o pixel art; os já escolhidos ficam apagados
+  const box = $('#lobbyCards');
+  box.innerHTML = '';
+  const joined = Net.me > 0;
+  $('#lobbyPick').classList.toggle('hidden', !joined);
+  if (joined) CHARS.forEach((c, i) => {
+    const owner = Net.players.find(p => p.ch === i);
+    const mine = owner && owner.num === Net.me;
+    const d = document.createElement('div');
+    d.className = 'card' + (mine ? ' sel' : owner ? ' taken' : '');
+    d.appendChild(mine ? svgEl(portraitSVG(c)) : photoEl(c, 'ph'));
+    const nm = document.createElement('div');
+    nm.className = 'nm'; nm.textContent = c.name;
+    const who = document.createElement('div');
+    who.className = 'who'; who.textContent = owner ? (mine ? 'você' : 'Jogador ' + owner.num) : '';
+    d.append(nm, who);
+    if (owner && owner.host){
+      const crown = document.createElement('div');
+      crown.className = 'crown'; crown.textContent = '👑'; crown.title = 'Dono da sala';
+      d.appendChild(crown);
+    }
+    if (!owner) d.addEventListener('click', () => chooseOnline(i));
+    box.appendChild(d);
+  });
+
+  // só o dono vê voltas e COMEÇAR; libera com 2+ jogadores e todos com personagem
+  $('#lobbyHostBox').classList.toggle('hidden', !Net.isHost);
+  $('#lobbyStart').classList.toggle('hidden', !Net.isHost);
+  $('#lobbyStart').disabled = !(n >= 2 && Net.players.every(p => p.ch >= 0));
+}
+
+// toquei num personagem livre
+function chooseOnline(ch){
+  chosen = ch; savePrefs();   // lembra pra próxima vez
+  if (Net.isHost) pickChar(Net.me, ch);
+  else if (Net.host && Net.me) Net.host.send({t:'pick', ch});
+}
+
+// ---- dono da sala ----
+function hostRoom(code, pass, onTaken){
+  netReset();
+  const peer = new Peer(NET_PREFIX + code, {config: NET_CONFIG});
+  Object.assign(Net, {peer, isHost:true, room:code, pass, me:1, laps:+$('#lobbyLaps').value,
+    players:[{num:1, host:true, ch:chosen}]});
+  showLobby('Abrindo a sala...');
+  peer.on('open', () => {
+    if (Net.peer === peer) lobbyStatus('Sala aberta! Esperando jogadores...');
+  });
+  peer.on('connection', conn => { if (Net.peer === peer) acceptGuest(conn); });
+  peer.on('error', err => {
+    if (Net.peer !== peer) return;
+    if (err.type === 'unavailable-id' && onTaken) onTaken();
+    else netLeave(netError(err));
+  });
+}
+function acceptGuest(conn){
+  conn.on('data', msg => {
+    if (msg.t === 'hello') return greet(conn, msg);
+    const g = Net.guests.find(g => g.conn === conn);
+    if (g && msg.t === 'pick') pickChar(g.num, msg.ch);
+  });
+  conn.on('close', () => {
+    const i = Net.guests.findIndex(g => g.conn === conn);
+    if (i < 0) return;
+    const num = Net.guests[i].num;
+    Net.guests.splice(i, 1);
+    Net.players = Net.players.filter(p => p.num !== num);
+    sendRoom();
+  });
+}
+function greet(conn, msg){
+  if (Net.guests.some(g => g.conn === conn)) return;
+  if (Net.players.length >= MAX_PLAYERS) return refuse(conn, 'A sala está cheia (máximo ' + MAX_PLAYERS + ').');
+  if (Net.pass && msg.pass !== Net.pass) return refuse(conn, 'Senha errada.');
+  let num = 2;   // menor número livre
+  while (Net.players.some(p => p.num === num)) num++;
+  Net.guests.push({conn, num});
+  Net.players.push({num, host:false, ch:-1});
+  conn.send({t:'welcome', num});
+  sendRoom();
+}
+function refuse(conn, why){
+  conn.send({t:'refuse', why});
+  setTimeout(() => conn.close(), 500);   // dá tempo da mensagem chegar
+}
+// dono: troca o personagem de um jogador, se ninguém mais estiver com ele
+function pickChar(num, ch){
+  if (!Number.isInteger(ch) || ch < 0 || ch >= CHARS.length) return;
+  if (Net.players.some(p => p.ch === ch && p.num !== num)) return;
+  const p = Net.players.find(p => p.num === num);
+  if (p){ p.ch = ch; sendRoom(); }
+}
+// manda o estado da sala (jogadores + voltas) pra todo mundo
+function sendRoom(){
+  Net.guests.forEach(g => g.conn.send({t:'room', list:Net.players, laps:Net.laps}));
+  renderLobby();
+}
+
+// ---- convidado ----
+function joinRoom(code, pass){
+  netReset();
+  const peer = new Peer({config: NET_CONFIG});
+  Object.assign(Net, {peer, room:code});
+  showLobby('Entrando na sala...');
+  peer.on('open', () => {
+    if (Net.peer !== peer) return;
+    const conn = peer.connect(NET_PREFIX + code, {reliable:true});
+    Net.host = conn;
+    conn.on('open', () => conn.send({t:'hello', pass}));
+    conn.on('data', msg => {
+      if (Net.peer !== peer) return;
+      if (msg.t === 'welcome'){
+        clearTimeout(Net.timer);
+        Net.me = msg.num;
+        lobbyStatus('Você entrou! Esperando o dono começar...');
+        conn.send({t:'pick', ch:chosen});   // tenta o último personagem usado
+      }
+      else if (msg.t === 'refuse') netLeave(msg.why);
+      else if (msg.t === 'room'){ Net.players = msg.list; Net.laps = msg.laps; renderLobby(); }
+      else if (msg.t === 'start') netStart();
+    });
+    conn.on('close', () => { if (Net.peer === peer) netLeave('A sala foi fechada.'); });
+  });
+  peer.on('error', err => { if (Net.peer === peer) netLeave(netError(err)); });
+  // sem resposta em 20 s: provavelmente o TURN não conseguiu ligar os dois
+  Net.timer = setTimeout(() => {
+    if (Net.peer === peer) netLeave('Não deu pra conectar. Tente de novo ou use outra rede (Wi-Fi).');
+  }, 20000);
+}
+
+// sala aberta: quem chega primeiro vira o dono; se já tem dono, entra como convidado
+function openRoom(){
+  hostRoom(OPEN_ROOM, '', () => joinRoom(OPEN_ROOM, ''));
+}
+
+$('#openRoom').addEventListener('click', openRoom);
+$('#createRoom').addEventListener('click', () => {
+  const withPass = $('#roomType').value === 'password';
+  const pass = $('#newPass').value;
+  if (withPass && !pass) return onlineMsg('Escolha uma senha.');
+  hostRoom(makeCode(), withPass ? pass : '', null);
+});
+$('#joinRoom').addEventListener('click', () => {
+  const code = normCode($('#joinCode').value);
+  if (!code) return onlineMsg('Digite o código da sala.');
+  joinRoom(code, $('#joinPass').value);
+});
+$('#lobbyLeave').addEventListener('click', () => netLeave(''));
+$('#lobbyLaps').addEventListener('change', () => {
+  if (!Net.isHost) return;
+  Net.laps = +$('#lobbyLaps').value;
+  sendRoom();
+});
+$('#lobbyStart').addEventListener('click', () => {
+  if (!Net.isHost) return;
+  Net.guests.forEach(g => g.conn.send({t:'start'}));
+  netStart();
+});
+// por enquanto só avisa; a corrida online de verdade entra na etapa 5
+function netStart(){
+  lobbyStatus('Todos prontos! 🏁 (a corrida online entra na etapa 5)');
+}
+// no celular abre o "compartilhar" (WhatsApp etc.); no PC copia o link
+$('#copyLink').addEventListener('click', () => {
+  const url = roomLink(), btn = $('#copyLink');
+  if (navigator.share) navigator.share({title:'Breder Kart', text:'Vem correr comigo no Breder Kart! 🏁', url}).catch(() => {});
+  else if (navigator.clipboard) navigator.clipboard.writeText(url).then(() => { btn.textContent = 'Link copiado! ✅'; }, () => prompt('Copie o link:', url));
+  else prompt('Copie o link:', url);
+});
+// ---- tutorial do online ----
+const TUTORIAL = [
+  {icon:'🌐', title:'Jogar online', text:'Corra com até 5 pessoas da família, cada uma no seu celular ou computador. Precisa de internet!'},
+  {icon:'🚪', title:'Sala aberta', text:'Uma sala que todo mundo encontra. Quem entra primeiro vira o dono 👑. Se o dono sair, a sala fecha.'},
+  {icon:'🔒', title:'Criar sala', text:'Uma sala só sua. "Só com link": entra quem receber o link. "Com senha": também precisa da senha. Toque em "Enviar link 🔗" pra mandar no WhatsApp.'},
+  {icon:'📩', title:'Entrar numa sala', text:'Recebeu um link? É só abrir! Ou digite o código (tipo K7Q2-M9XA) e a senha, se tiver.'},
+  {icon:'🏎️', title:'Sala de espera', text:'Escolha seu piloto: cada um só pode ser escolhido uma vez. O dono escolhe as voltas e toca em COMEÇAR! quando todos estiverem prontos.'},
+  {icon:'📶', title:'Não conectou?', text:'Tente de novo ou troque de rede (o Wi-Fi costuma funcionar melhor que o 4G).'},
+];
+let tutStep = 0;
+function openTutorial(){
+  tutStep = 0;
+  $('#tutNever').checked = skipTutorial;
+  showScreen('#tutorial');
+  renderTutorial();
+}
+function renderTutorial(){
+  const s = TUTORIAL[tutStep], last = tutStep === TUTORIAL.length - 1;
+  $('#tutIcon').textContent = s.icon;
+  $('#tutTitle').textContent = s.title;
+  $('#tutText').textContent = s.text;
+  $('#tutDots').textContent = TUTORIAL.map((_, i) => i === tutStep ? '●' : '○').join('');
+  $('#tutPrev').disabled = tutStep === 0;
+  $('#tutNext').textContent = last ? 'Vamos lá! 🏁' : 'Próximo ▶';
+  $('#tutSkip').classList.toggle('hidden', last);
+}
+function closeTutorial(){
+  skipTutorial = $('#tutNever').checked;
+  savePrefs();
+  onlineMsg('');
+  showScreen('#onlineMenu');
+}
+$('#tutNext').addEventListener('click', () => {
+  if (tutStep === TUTORIAL.length - 1) return closeTutorial();
+  tutStep++; renderTutorial();
+});
+$('#tutPrev').addEventListener('click', () => {
+  if (tutStep > 0){ tutStep--; renderTutorial(); }
+});
+$('#tutSkip').addEventListener('click', closeTutorial);
+$('#tutHelp').addEventListener('click', openTutorial);
+
+// fechou a página: libera a sala no servidor na hora
+addEventListener('pagehide', () => { if (Net.peer) Net.peer.destroy(); });
+
+// abriu pelo link de convite: vai pra tela online com o código já preenchido
+const linkRoom = new URLSearchParams(location.search).get('sala');
+if (linkRoom){
+  $('#joinCode').value = normCode(linkRoom);
+  showScreen('#onlineMenu');
+  onlineMsg('Convite recebido! Toque em ENTRAR.');
+}
+
 /* ============================================================
    18. Loop principal
    ============================================================ */
@@ -1556,6 +1998,13 @@ function frame(now){
       if (!(r.finished && r.rankLocked)) r.rank = i + 1;
       if (r.finished) r.rankLocked = true;
     });
+
+    // coroa no 1º lugar (só depois da largada), balançando de leve
+    const leader = Race.state !== 'count' && Race.racers.find(r => r.rank === 1);
+    if (leader){
+      if (crownSprite.parent !== leader.m.g) leader.m.g.add(crownSprite);
+      crownSprite.position.y = (leader.isP ? 3.4 : 4.6) + Math.sin(now * 0.004) * 0.15;
+    } else if (crownSprite.parent) crownSprite.parent.remove(crownSprite);
 
     if (Race.state !== 'done' || Race.doneT > 0) updateHUD();
     if (Race.state === 'done'){
