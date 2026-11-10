@@ -74,7 +74,7 @@ h1{margin:0;font-size:clamp(40px,9vw,72px);line-height:1}
 .card.sel{border-color:#ffcf1f;transform:translateY(-6px) scale(1.04)}
 .card svg{width:124px;height:auto;display:block;margin:2px auto 8px}
 .card .ph{width:124px;height:150px;object-fit:cover;display:block;margin:2px auto 8px;border-radius:12px;background:#eee}
-.card input{width:100%;font-family:inherit;font-size:17px;font-weight:800;text-align:center;border:2px solid #ddd;border-radius:10px;padding:4px;color:#000;background:#fff;-webkit-text-fill-color:#000;color-scheme:light;user-select:text;-webkit-user-select:text}
+#cards .card .nm{font-size:18px;padding:4px 0}
 .row{margin-top:16px;font-size:18px;font-weight:800}
 select{font-family:inherit;font-size:17px;font-weight:800;border-radius:10px;border:3px solid #fff;padding:2px 8px}
 .big{margin-top:16px;font-family:inherit;font-size:30px;font-weight:800;color:#1d2340;background:#ffcf1f;border:none;border-radius:18px;padding:6px 40px;box-shadow:0 6px 0 #c48b00;cursor:pointer}
@@ -107,7 +107,7 @@ select{font-family:inherit;font-size:17px;font-weight:800;border-radius:10px;bor
 .card .crown{position:absolute;top:-20px;left:50%;transform:translateX(-50%) rotate(-12deg);font-size:30px;line-height:1;filter:drop-shadow(0 2px 0 #1d2340)}
 #lobbyCards .card svg{width:84px;margin:0 auto 4px}
 #lobbyCards .card .ph{width:84px;height:100px;margin:0 auto 4px}
-.card .nm{font-size:15px;font-weight:800;color:#000;line-height:1.1}
+.card .nm{font-size:15px;font-weight:800;color:#000;line-height:1.1;overflow-wrap:anywhere}
 .card .who{font-size:13px;font-weight:800;color:#d6247a;min-height:16px}
 .card.taken{opacity:.45;cursor:default}
 </style>
@@ -270,18 +270,16 @@ function loadPrefs(){
   try {
     const raw = JSON.parse(localStorage.getItem(PREFS_KEY) || '{}');
     return {
-      nomes:   Array.isArray(raw.nomes) ? raw.nomes : null,
       escolha: Number.isInteger(raw.escolha) ? raw.escolha : 0,
       rivais:  Array.isArray(raw.rivais) ? raw.rivais : null,
       modo:    raw.modo || null,
       semTutorial: !!raw.semTutorial,
     };
-  } catch { return {nomes:null, escolha:0, rivais:null, modo:null, semTutorial:false}; }
+  } catch { return {escolha:0, rivais:null, modo:null, semTutorial:false}; }
 }
 function savePrefs(){
   try {
     localStorage.setItem(PREFS_KEY, JSON.stringify({
-      nomes:   CHARS.map(c => c.name),
       escolha: chosen,
       rivais:  rivals,
       modo:    $('#diff').value,
@@ -307,7 +305,6 @@ const CHARS = [
   {name:'João Victor', file:'João Victor', eye:'#3d7fd1', hair:'#a8843f', shirt:'#f4f4f4', boy:true},
 ];
 CHARS.forEach(c => c.kart = '#888888');   // cor provisória; a de verdade é sorteada a cada corrida
-if (prefs.nomes) prefs.nomes.forEach((n,i) => { if (n && CHARS[i]) CHARS[i].name = n; });
 
 const MAX_RIVALS = 3;
 let chosen = prefs.escolha;
@@ -1429,25 +1426,12 @@ function buildCards(){
   CHARS.forEach((c,i) => {
     const d = document.createElement('div');
     d.className = 'card' + (i === chosen ? ' sel' : '');
-    d.innerHTML = `<input maxlength="16" value="${c.name.replace(/"/g,'&quot;')}">`;
     // card escolhido mostra o pixel art; os outros, a foto (se existir)
-    d.prepend(i === chosen ? svgEl(portraitSVG(c)) : photoEl(c, 'ph'));
-    d.addEventListener('click', e => {
-      if (e.target.tagName === 'INPUT') return;
-      chosen = i; buildCards();
-    });
-    const inp = d.querySelector('input');
-    inp.addEventListener('input', () => {
-      c.name = inp.value.trim() || ('Piloto ' + (i+1));
-      savePrefs(); buildRivals();
-    });
-    inp.addEventListener('focus', () => {
-      if (chosen !== i){
-        chosen = i;
-        buildCards();
-        document.querySelectorAll('.card input')[i].focus();
-      }
-    });
+    d.appendChild(i === chosen ? svgEl(portraitSVG(c)) : photoEl(c, 'ph'));
+    const nm = document.createElement('div');
+    nm.className = 'nm'; nm.textContent = c.name;
+    d.appendChild(nm);
+    d.addEventListener('click', () => { chosen = i; buildCards(); });
     box.appendChild(d);
   });
   buildRivals();
@@ -1563,6 +1547,8 @@ const roomLink = () => location.href.split(/[?#]/)[0] + '?sala=' + Net.room;
 function onlineMsg(t){ $('#onlineMsg').textContent = t; }
 function lobbyStatus(t){ $('#lobbyStatus').textContent = t; }
 
+// erros de "perdi o servidor do PeerJS" (não da conexão com os outros jogadores)
+const NET_DOWN = ['network', 'server-error', 'socket-error', 'socket-closed'];
 function netError(err){
   switch (err.type){
     case 'peer-unavailable': return 'Sala não encontrada. Confira o código.';
@@ -1655,14 +1641,28 @@ function hostRoom(code, pass, onTaken){
   Object.assign(Net, {peer, isHost:true, room:code, pass, me:1, laps:+$('#lobbyLaps').value,
     players:[{num:1, host:true, ch:chosen}]});
   showLobby('Abrindo a sala...');
+  let opened = false;
   peer.on('open', () => {
+    opened = true;
     if (Net.peer === peer) lobbyStatus('Sala aberta! Esperando jogadores...');
   });
   peer.on('connection', conn => { if (Net.peer === peer) acceptGuest(conn); });
   peer.on('error', err => {
     if (Net.peer !== peer) return;
-    if (err.type === 'unavailable-id' && onTaken) onTaken();
-    else netLeave(netError(err));
+    if (err.type === 'unavailable-id' && onTaken && !opened) return onTaken();
+    // a sala já estava aberta e só a ligação com o servidor caiu: quem está dentro continua
+    if (opened && NET_DOWN.includes(err.type)) return lobbyStatus('Internet instável, reconectando...');
+    netLeave(netError(err));
+  });
+  keepAlive(peer);
+}
+// a ligação com o servidor do PeerJS caiu (tela apagada, internet oscilou):
+// reconecta pra sala continuar registrada e ninguém mais "abrir" o mesmo nome
+function keepAlive(peer){
+  peer.on('disconnected', () => {
+    setTimeout(() => {
+      if (Net.peer === peer && !peer.destroyed && peer.disconnected) peer.reconnect();
+    }, 2000);
   });
 }
 function acceptGuest(conn){
@@ -1709,11 +1709,11 @@ function sendRoom(){
 }
 
 // ---- convidado ----
-function joinRoom(code, pass){
+function joinRoom(code, pass, onMissing){
   netReset();
   const peer = new Peer({config: NET_CONFIG});
   Object.assign(Net, {peer, room:code});
-  showLobby('Entrando na sala...');
+  showLobby(code === OPEN_ROOM ? 'Procurando a sala aberta...' : 'Entrando na sala...');
   peer.on('open', () => {
     if (Net.peer !== peer) return;
     const conn = peer.connect(NET_PREFIX + code, {reliable:true});
@@ -1733,16 +1733,23 @@ function joinRoom(code, pass){
     });
     conn.on('close', () => { if (Net.peer === peer) netLeave('A sala foi fechada.'); });
   });
-  peer.on('error', err => { if (Net.peer === peer) netLeave(netError(err)); });
+  peer.on('error', err => {
+    if (Net.peer !== peer) return;
+    if (err.type === 'peer-unavailable' && onMissing) return onMissing();
+    // já estou dentro: a conversa com o dono não depende mais do servidor
+    if (Net.me && NET_DOWN.includes(err.type)) return;
+    netLeave(netError(err));
+  });
   // sem resposta em 20 s: provavelmente o TURN não conseguiu ligar os dois
   Net.timer = setTimeout(() => {
     if (Net.peer === peer) netLeave('Não deu pra conectar. Tente de novo ou use outra rede (Wi-Fi).');
   }, 20000);
 }
 
-// sala aberta: quem chega primeiro vira o dono; se já tem dono, entra como convidado
+// sala aberta: primeiro tenta entrar; se a sala não existe, vira o dono
+// (se duas pessoas chegarem juntas, a segunda a registrar volta a entrar como convidada)
 function openRoom(){
-  hostRoom(OPEN_ROOM, '', () => joinRoom(OPEN_ROOM, ''));
+  joinRoom(OPEN_ROOM, '', () => hostRoom(OPEN_ROOM, '', () => joinRoom(OPEN_ROOM, '')));
 }
 
 $('#openRoom').addEventListener('click', openRoom);
