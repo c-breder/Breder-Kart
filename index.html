@@ -94,6 +94,9 @@ select{font-family:inherit;font-size:17px;font-weight:800;border-radius:10px;bor
 .overlay input{font-family:inherit;font-size:17px;font-weight:800;border-radius:10px;border:3px solid #fff;padding:2px 8px;width:170px;color:#000;background:#fff;user-select:text;-webkit-user-select:text}
 .big:disabled{opacity:.5;cursor:default;transform:none}
 .overlay input[type=checkbox]{width:auto;vertical-align:middle}
+.big.small{font-size:16px;padding:4px 16px;box-shadow:0 4px 0 #aab}
+/* registro da conexão na tela (pra investigar no celular, sem Console) */
+#netLogBox{position:fixed;left:8px;right:8px;bottom:8px;max-height:45vh;overflow:auto;margin:0;padding:8px 10px;background:rgba(0,0,0,.88);color:#9f9;font:12px/1.35 monospace;border-radius:10px;z-index:60;white-space:pre-wrap;user-select:text;-webkit-user-select:text}
 /* tutorial do online */
 #tutBox{background:rgba(255,255,255,.92);border-radius:20px;padding:12px 22px 14px;max-width:540px;color:#1d2340;text-align:center}
 #tutIcon{font-size:48px;line-height:1.1}
@@ -205,7 +208,11 @@ select{font-family:inherit;font-size:17px;font-weight:800;border-radius:10px;bor
     <button id="tutHelp" class="big alt">Como jogar online? ❓</button>
     <button id="onlineBack" class="big alt">Voltar</button>
   </div>
+  <button class="big alt small logBtn">📋 Registro da conexão</button>
 </div>
+
+<!-- Registro da conexão (toque pra fechar) -->
+<pre id="netLogBox" class="hidden"></pre>
 
 <!-- Tutorial do online -->
 <div id="tutorial" class="overlay hidden">
@@ -241,6 +248,7 @@ select{font-family:inherit;font-size:17px;font-weight:800;border-radius:10px;bor
     <button id="lobbyStart" class="big hidden">COMEÇAR!</button>
     <button id="lobbyLeave" class="big alt">Sair da sala</button>
   </div>
+  <button class="big alt small logBtn">📋 Registro da conexão</button>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -1508,11 +1516,20 @@ $('#roomType').addEventListener('change', () => {
 const NET_PREFIX = 'breder-kart-';   // separa nossas salas das de outros sites no servidor do PeerJS
 const OPEN_ROOM = 'SALA-ABERTA';
 const MAX_PLAYERS = 5;
-// sempre pelo TURN do PeerJS: ninguém vê o IP de ninguém
+// TEMPORÁRIO (1 semana, até ~17/11/2026): TURN grátis da Metered.
+// Trocar pelo TURN do servidor-casa e apagar a conta da Metered.
+const TURN_USERNAME   = '641d0e1df05b4da4a7d4c835'; 
+const TURN_CREDENTIAL = 'iLhwM67n0qOmpxII';
+// sempre pelo TURN: ninguém vê o IP de ninguém
 const NET_CONFIG = {
   iceServers: [{
-    urls: ['turn:eu-0.turn.peerjs.com:3478', 'turn:us-0.turn.peerjs.com:3478'],
-    username: 'peerjs', credential: 'peerjsp',
+    urls: [
+      'turn:standard.relay.metered.ca:80',
+      'turn:standard.relay.metered.ca:80?transport=tcp',
+      'turn:standard.relay.metered.ca:443',
+      'turns:standard.relay.metered.ca:443?transport=tcp',
+    ],
+    username: TURN_USERNAME, credential: TURN_CREDENTIAL,
   }],
   iceTransportPolicy: 'relay',
 };
@@ -1544,11 +1561,28 @@ function normCode(s){
 }
 const roomLink = () => location.href.split(/[?#]/)[0] + '?sala=' + Net.room;
 
-function onlineMsg(t){ $('#onlineMsg').textContent = t; }
-function lobbyStatus(t){ $('#lobbyStatus').textContent = t; }
+function onlineMsg(t){ $('#onlineMsg').textContent = t; if (t) netLog('tela:', t); }
+function lobbyStatus(t){ $('#lobbyStatus').textContent = t; netLog('tela:', t); }
 
-// registro no Console (F12) pra investigar problemas de conexão
-const netLog = (...a) => console.log('%c[online]', 'color:#d6247a;font-weight:bold', new Date().toLocaleTimeString(), ...a);
+// registro da conexão: vai pro Console (F12) e pro painel "📋 Registro da conexão"
+const GAME_VERSION = '2026-11-10 e';   // aumentar a cada mudança, pra saber se o aparelho pegou a versão nova
+const NET_LOG = ['Breder Kart versão ' + GAME_VERSION];
+if (TURN_USERNAME.startsWith('COLE_AQUI')) NET_LOG.push('⚠️ TURN sem senha: cole o username e a credential da Metered no index.html');
+function netLog(...a){
+  const line = new Date().toLocaleTimeString() + ' ' + a.join(' ');
+  console.log('%c[online]', 'color:#d6247a;font-weight:bold', line);
+  NET_LOG.push(line);
+  if (NET_LOG.length > 80) NET_LOG.splice(1, 1);   // guarda a linha da versão
+  if (!$('#netLogBox').classList.contains('hidden')) showNetLog();
+}
+function showNetLog(){
+  const box = $('#netLogBox');
+  box.textContent = NET_LOG.join('\n') + '\n\n(toque aqui pra fechar)';
+  box.classList.remove('hidden');
+  box.scrollTop = box.scrollHeight;
+}
+document.querySelectorAll('.logBtn').forEach(b => b.addEventListener('click', showNetLog));
+$('#netLogBox').addEventListener('click', () => $('#netLogBox').classList.add('hidden'));
 // erros de "perdi o servidor do PeerJS" (não da conexão com os outros jogadores)
 const NET_DOWN = ['network', 'server-error', 'socket-error', 'socket-closed'];
 function netError(err){
