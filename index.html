@@ -1547,6 +1547,8 @@ const roomLink = () => location.href.split(/[?#]/)[0] + '?sala=' + Net.room;
 function onlineMsg(t){ $('#onlineMsg').textContent = t; }
 function lobbyStatus(t){ $('#lobbyStatus').textContent = t; }
 
+// registro no Console (F12) pra investigar problemas de conexão
+const netLog = (...a) => console.log('%c[online]', 'color:#d6247a;font-weight:bold', new Date().toLocaleTimeString(), ...a);
 // erros de "perdi o servidor do PeerJS" (não da conexão com os outros jogadores)
 const NET_DOWN = ['network', 'server-error', 'socket-error', 'socket-closed'];
 function netError(err){
@@ -1637,19 +1639,27 @@ function chooseOnline(ch){
 // ---- dono da sala ----
 function hostRoom(code, pass, onTaken){
   netReset();
-  const peer = new Peer(NET_PREFIX + code, {config: NET_CONFIG});
+  const peer = new Peer(NET_PREFIX + code, {config: NET_CONFIG, debug: 2});
   Object.assign(Net, {peer, isHost:true, room:code, pass, me:1, laps:+$('#lobbyLaps').value,
     players:[{num:1, host:true, ch:chosen}]});
   showLobby('Abrindo a sala...');
+  netLog('dono: registrando', code);
   let opened = false;
   peer.on('open', () => {
+    netLog('dono: sala registrada no servidor');
     opened = true;
     if (Net.peer === peer) lobbyStatus('Sala aberta! Esperando jogadores...');
   });
-  peer.on('connection', conn => { if (Net.peer === peer) acceptGuest(conn); });
+  peer.on('connection', conn => {
+    netLog('dono: alguém está conectando', conn.peer);
+    if (Net.peer === peer) acceptGuest(conn);
+  });
   peer.on('error', err => {
+    netLog('dono: erro', err.type);
     if (Net.peer !== peer) return;
     if (err.type === 'unavailable-id' && onTaken && !opened) return onTaken();
+    // um convidado sumiu antes da resposta chegar: problema dele, a sala continua
+    if (err.type === 'peer-unavailable') return;
     // a sala já estava aberta e só a ligação com o servidor caiu: quem está dentro continua
     if (opened && NET_DOWN.includes(err.type)) return lobbyStatus('Internet instável, reconectando...');
     netLeave(netError(err));
@@ -1660,12 +1670,18 @@ function hostRoom(code, pass, onTaken){
 // reconecta pra sala continuar registrada e ninguém mais "abrir" o mesmo nome
 function keepAlive(peer){
   peer.on('disconnected', () => {
+    netLog('dono: ligação com o servidor caiu');
     setTimeout(() => {
-      if (Net.peer === peer && !peer.destroyed && peer.disconnected) peer.reconnect();
+      if (Net.peer === peer && !peer.destroyed && peer.disconnected){
+        netLog('dono: reconectando');
+        peer.reconnect();
+      }
     }, 2000);
   });
 }
 function acceptGuest(conn){
+  conn.on('open', () => netLog('dono: conexão aberta com', conn.peer));
+  conn.on('error', err => netLog('dono: erro na conexão com', conn.peer, err.type || err));
   conn.on('data', msg => {
     if (msg.t === 'hello') return greet(conn, msg);
     const g = Net.guests.find(g => g.conn === conn);
@@ -1711,14 +1727,17 @@ function sendRoom(){
 // ---- convidado ----
 function joinRoom(code, pass, onMissing){
   netReset();
-  const peer = new Peer({config: NET_CONFIG});
+  const peer = new Peer({config: NET_CONFIG, debug: 2});
   Object.assign(Net, {peer, room:code});
   showLobby(code === OPEN_ROOM ? 'Procurando a sala aberta...' : 'Entrando na sala...');
-  peer.on('open', () => {
+  netLog('convidado: procurando', code);
+  peer.on('open', id => {
+    netLog('convidado: ligado ao servidor como', id);
     if (Net.peer !== peer) return;
     const conn = peer.connect(NET_PREFIX + code, {reliable:true});
     Net.host = conn;
-    conn.on('open', () => conn.send({t:'hello', pass}));
+    conn.on('open', () => { netLog('convidado: conexão aberta com o dono'); conn.send({t:'hello', pass}); });
+    conn.on('error', err => netLog('convidado: erro na conexão', err.type || err));
     conn.on('data', msg => {
       if (Net.peer !== peer) return;
       if (msg.t === 'welcome'){
@@ -1734,6 +1753,7 @@ function joinRoom(code, pass, onMissing){
     conn.on('close', () => { if (Net.peer === peer) netLeave('A sala foi fechada.'); });
   });
   peer.on('error', err => {
+    netLog('convidado: erro', err.type);
     if (Net.peer !== peer) return;
     if (err.type === 'peer-unavailable' && onMissing) return onMissing();
     // já estou dentro: a conversa com o dono não depende mais do servidor
@@ -1742,6 +1762,7 @@ function joinRoom(code, pass, onMissing){
   });
   // sem resposta em 20 s: provavelmente o TURN não conseguiu ligar os dois
   Net.timer = setTimeout(() => {
+    netLog('convidado: 20 s sem resposta do dono');
     if (Net.peer === peer) netLeave('Não deu pra conectar. Tente de novo ou use outra rede (Wi-Fi).');
   }, 20000);
 }
