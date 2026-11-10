@@ -1565,7 +1565,7 @@ function onlineMsg(t){ $('#onlineMsg').textContent = t; if (t) netLog('tela:', t
 function lobbyStatus(t){ $('#lobbyStatus').textContent = t; netLog('tela:', t); }
 
 // registro da conexão: vai pro Console (F12) e pro painel "📋 Registro da conexão"
-const GAME_VERSION = '2026-11-10 e';   // aumentar a cada mudança, pra saber se o aparelho pegou a versão nova
+const GAME_VERSION = '2026-11-10 f';   // aumentar a cada mudança, pra saber se o aparelho pegou a versão nova
 const NET_LOG = ['Breder Kart versão ' + GAME_VERSION];
 if (TURN_USERNAME.startsWith('COLE_AQUI')) NET_LOG.push('⚠️ TURN sem senha: cole o username e a credential da Metered no index.html');
 function netLog(...a){
@@ -1583,6 +1583,18 @@ function showNetLog(){
 }
 document.querySelectorAll('.logBtn').forEach(b => b.addEventListener('click', showNetLog));
 $('#netLogBox').addEventListener('click', () => $('#netLogBox').classList.add('hidden'));
+// mostra no registro o que o TURN respondeu (relay = caminho pelo TURN funcionou;
+// erro 401 = senha recusada; 701 = endereço do TURN não respondeu)
+function watchIce(conn, who){
+  const pc = conn.peerConnection;
+  if (!pc) return setTimeout(() => watchIce(conn, who), 100);
+  pc.addEventListener('icecandidate', e => {
+    if (e.candidate) netLog(who + ': caminho encontrado', e.candidate.type || '?', e.candidate.protocol || '');
+    else netLog(who + ': terminou de procurar caminhos');
+  });
+  pc.addEventListener('icecandidateerror', e => netLog(who + ': erro no TURN', e.errorCode, e.errorText || '', e.url || ''));
+  pc.addEventListener('iceconnectionstatechange', () => netLog(who + ': estado da conexão', pc.iceConnectionState));
+}
 // erros de "perdi o servidor do PeerJS" (não da conexão com os outros jogadores)
 const NET_DOWN = ['network', 'server-error', 'socket-error', 'socket-closed'];
 function netError(err){
@@ -1686,6 +1698,7 @@ function hostRoom(code, pass, onTaken){
   });
   peer.on('connection', conn => {
     netLog('dono: alguém está conectando', conn.peer);
+    watchIce(conn, 'dono');
     if (Net.peer === peer) acceptGuest(conn);
   });
   peer.on('error', err => {
@@ -1769,6 +1782,7 @@ function joinRoom(code, pass, onMissing){
     netLog('convidado: ligado ao servidor como', id);
     if (Net.peer !== peer) return;
     const conn = peer.connect(NET_PREFIX + code, {reliable:true});
+    watchIce(conn, 'convidado');
     Net.host = conn;
     conn.on('open', () => { netLog('convidado: conexão aberta com o dono'); conn.send({t:'hello', pass}); });
     conn.on('error', err => netLog('convidado: erro na conexão', err.type || err));
