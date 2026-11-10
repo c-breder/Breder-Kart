@@ -31,6 +31,6 @@ Fotos em pé (retrato) ficam melhores: a tela inicial corta a foto em 124×150 e
 2. Clique em **Add file → Upload files** e envie o `index.html`.
 3. Envie as fotos arrastando a pasta `fotos` inteira pro upload. Assim elas ficam dentro de `fotos/`.
 4. Vá em **Settings → Pages** e escolha a branch `main`, pasta `/ (root)`.
-5. Depois de 1 ou 2 minutos, o jogo fica no endereço `https://<usuário>.github.io/<repositório>/`.
+5. Depois de 1 ou 2 minutos, o jogo fica no endereço https://c-breder.github.io/Breder-Kart/ .
 
 O GitHub Pages diferencia maiúsculas de minúsculas no nome do arquivo: `alice.jpg` não é a mesma coisa que `Alice.jpg`.
