@@ -178,6 +178,7 @@ select{font-family:inherit;font-size:17px;font-weight:800;border-radius:10px;bor
   <div class="btns">
     <button id="again" class="big">DE NOVO!</button>
     <button id="toMenu" class="big alt">Trocar piloto</button>
+    <button id="backLobby" class="big hidden">VOLTAR À SALA</button>
   </div>
 </div>
 
@@ -952,6 +953,8 @@ const Race = {
   player: null,
   toastT: 0,
   menuAng: 0,
+  online: false,  // corrida online (sem rivais do computador)
+  netT: 0,        // tempo até mandar a próxima posição pela rede
 };
 
 // respostas das rivais quando você buzina perto delas
@@ -1008,6 +1011,8 @@ function startRace(){
   goFullscreen();
   savePrefs();
   clearRace();
+  Race.online = false;
+  setResultButtons();
 
   Race.laps = +$('#laps').value || 3;
   const me = chosen;
@@ -1108,7 +1113,8 @@ function honk(){
   if (!p || Race.honkCD > 0) return;
   Race.honkCD = 0.6; SFX.honk();
   const near = Race.racers.filter(r => !r.isP && Math.hypot(r.x - p.x, r.z - p.z) < 25);
-  toast(near.length ? `${near[0].ch.name}: ${pick(AI_LINES)}` : 'BI BI! 📯');
+  // no online as outras são gente de verdade: nada de inventar resposta
+  toast(near.length && !Race.online ? `${near[0].ch.name}: ${pick(AI_LINES)}` : 'BI BI! 📯');
 }
 
 /* ============================================================
@@ -1169,25 +1175,25 @@ function useItem(r){
     if (back){
       const x = r.x - fx*2.8, z = r.z - fz*2.8;
       m.position.set(x, 0, z);
-      Race.items.push({type:'banana', mesh:m, x, z, owner:r, immune:0.6, ttl:60});
+      netItem(Race.items[Race.items.push({type:'banana', mesh:m, x, z, owner:r, immune:0.6, ttl:60}) - 1]);
       if (r.isP) SFX.drop();
     } else {
       const lat = (r.x - P[r.idx].x)*NR[r.idx].x + (r.z - P[r.idx].z)*NR[r.idx].z;
       const ti = (r.idx + Math.round((22 + Math.max(r.speed,0)*1.1)/SEG)) % N;
       const ex = P[ti].x + NR[ti].x*lat, ez = P[ti].z + NR[ti].z*lat;
       m.position.set(r.x, 1, r.z);
-      Race.items.push({type:'banana', mesh:m, x:ex, z:ez, sx:r.x, sz:r.z, fly:0.7, flyT:0.7, owner:r, immune:0, ttl:60});
+      netItem(Race.items[Race.items.push({type:'banana', mesh:m, x:ex, z:ez, sx:r.x, sz:r.z, fly:0.7, flyT:0.7, owner:r, immune:0, ttl:60}) - 1]);
       SFX.throw(); toast('🍌 Banana lançada!');
     }
   } else if (it === 'tubarao'){
     const m = makeShark();
     const x = r.x + fx*3, z = r.z + fz*3;
     const target = Race.racers.find(o => o.rank === r.rank - 1 && !o.finished) || null;
-    Race.items.push({
+    netItem(Race.items[Race.items.push({
       type:'tubarao', mesh:m, x, z, a:r.a,
       spd: Math.max(r.speed + 26, 56),
       owner:r, immune:0.5, ttl:4.5, target, idx:r.idx,
-    });
+    }) - 1]);
     if (r.isP){
       SFX.throw();
       toast(target ? `🦈 Tubarãozinho atrás da ${target.ch.name}!` : '🦈 Tubarãozinho solto!');
@@ -1206,10 +1212,12 @@ function hit(r, kind, by){
     toast(kind === 'tubarao'
       ? (by && !by.isP ? `O tubarãozinho da ${by.ch.name} te mordeu! 🦈😵` : 'MORDIDA! 🦈😵')
       : (by && by.isP ? 'Escorregou na própria banana 🍌🤡' : 'Escorregou! 🍌😵'));
-  } else if (by && by.isP){
-    SFX.hit();
-    toast(kind === 'tubarao' ? `Nhac! ${r.ch.name} foi ${r.ch.boy ? 'mordido' : 'mordida'}! 🦈😂` : `${r.ch.name} escorregou na sua banana! 🍌😂`);
-  }
+  } else if (by && by.isP) hitByMeToast(r, kind);
+}
+// acertei alguém com o meu item
+function hitByMeToast(r, kind){
+  SFX.hit();
+  toast(kind === 'tubarao' ? `Nhac! ${r.ch.name} foi ${r.ch.boy ? 'mordido' : 'mordida'}! 🦈😂` : `${r.ch.name} escorregou na sua banana! 🍌😂`);
 }
 
 /* ============================================================
@@ -1277,7 +1285,10 @@ function physics(r, dt, c){
     if (r.isP) playerFinished();
   }
 
-  // visual
+  kartVisual(r, dt, off);
+}
+// desenho do kart: posição, rodas, piloto virado pra câmera e chama do turbo
+function kartVisual(r, dt, off){
   const m = r.m;
   m.g.position.set(r.x, 0, r.z);
   m.g.rotation.y = r.a;
@@ -1566,7 +1577,7 @@ function onlineMsg(t){ $('#onlineMsg').textContent = t; if (t) netLog('tela:', t
 function lobbyStatus(t){ $('#lobbyStatus').textContent = t; netLog('tela:', t); }
 
 // registro da conexão: vai pro Console (F12) e pro painel "📋 Registro da conexão"
-const GAME_VERSION = '2026-11-10 g';   // aumentar a cada mudança, pra saber se o aparelho pegou a versão nova
+const GAME_VERSION = '2026-11-10 i';   // aumentar a cada mudança, pra saber se o aparelho pegou a versão nova
 const NET_LOG = ['Breder Kart versão ' + GAME_VERSION];
 if (TURN_USERNAME.startsWith('COLE_AQUI')) NET_LOG.push('⚠️ TURN sem senha: cole o username e a credential da Metered no index.html');
 function netLog(...a){
@@ -1618,6 +1629,7 @@ function netReset(){
 }
 function netLeave(msg){
   netReset();
+  stopOnlineRace();
   showScreen('#onlineMenu');
   onlineMsg(msg || '');
 }
@@ -1733,7 +1745,17 @@ function acceptGuest(conn){
   conn.on('data', msg => {
     if (msg.t === 'hello') return greet(conn, msg);
     const g = Net.guests.find(g => g.conn === conn);
-    if (g && msg.t === 'pick') pickChar(g.num, msg.ch);
+    if (!g) return;
+    if (msg.t === 'pick') pickChar(g.num, msg.ch);
+    else if (msg.t === 'm' && Race.online && Array.isArray(msg.s)){
+      msg.s[0] = g.num;   // o número quem decide é o dono
+      netGotState(msg.s);
+    }
+    else if (msg.t === 'ev' && Race.online){
+      msg.from = g.num;
+      applyEvent(msg);
+      Net.guests.forEach(o => { if (o !== g && o.conn.open) o.conn.send(msg); });   // repassa pros outros
+    }
   });
   conn.on('close', () => {
     const i = Net.guests.findIndex(g => g.conn === conn);
@@ -1746,6 +1768,7 @@ function acceptGuest(conn){
 }
 function greet(conn, msg){
   if (Net.guests.some(g => g.conn === conn)) return;
+  if (Race.online) return refuse(conn, 'A corrida já começou. Tente de novo daqui a pouco!');
   if (Net.players.length >= MAX_PLAYERS) return refuse(conn, 'A sala está cheia (máximo ' + MAX_PLAYERS + ').');
   if (Net.pass && msg.pass !== Net.pass) return refuse(conn, 'Senha errada.');
   let num = 2;   // menor número livre
@@ -1770,6 +1793,7 @@ function pickChar(num, ch){
 function sendRoom(){
   Net.guests.forEach(g => g.conn.send({t:'room', list:Net.players, laps:Net.laps}));
   renderLobby();
+  dropMissingRacers();
 }
 
 // ---- convidado ----
@@ -1796,8 +1820,12 @@ function joinRoom(code, pass, onMissing){
         conn.send({t:'pick', ch:chosen});   // tenta o último personagem usado
       }
       else if (msg.t === 'refuse') netLeave(msg.why);
-      else if (msg.t === 'room'){ Net.players = msg.list; Net.laps = msg.laps; renderLobby(); }
-      else if (msg.t === 'start') netStart();
+      else if (msg.t === 'room'){ Net.players = msg.list; Net.laps = msg.laps; renderLobby(); dropMissingRacers(); }
+      else if (msg.t === 'go') startOnlineRace(msg);
+      else if (msg.t === 's' && Race.online && Array.isArray(msg.k)){
+        msg.k.forEach(s => { if (Array.isArray(s) && s[0] !== Net.me) netGotState(s); });
+      }
+      else if (msg.t === 'ev' && Race.online && msg.from !== Net.me) applyEvent(msg);
     });
     conn.on('close', () => { if (Net.peer === peer) netLeave('A sala foi fechada.'); });
   });
@@ -1822,16 +1850,21 @@ function openRoom(){
   joinRoom(OPEN_ROOM, '', () => hostRoom(OPEN_ROOM, '', () => joinRoom(OPEN_ROOM, '')));
 }
 
-$('#openRoom').addEventListener('click', openRoom);
+// som e tela cheia só funcionam depois de um toque; a largada do convidado vem pela rede,
+// então já liga os dois aqui
+function unlockMedia(){ initAudio(); goFullscreen(); }
+$('#openRoom').addEventListener('click', () => { unlockMedia(); openRoom(); });
 $('#createRoom').addEventListener('click', () => {
   const withPass = $('#roomType').value === 'password';
   const pass = $('#newPass').value;
   if (withPass && !pass) return onlineMsg('Escolha uma senha.');
+  unlockMedia();
   hostRoom(makeCode(), withPass ? pass : '', null);
 });
 $('#joinRoom').addEventListener('click', () => {
   const code = normCode($('#joinCode').value);
   if (!code) return onlineMsg('Digite o código da sala.');
+  unlockMedia();
   joinRoom(code, $('#joinPass').value);
 });
 $('#lobbyLeave').addEventListener('click', () => netLeave(''));
@@ -1841,14 +1874,200 @@ $('#lobbyLaps').addEventListener('change', () => {
   sendRoom();
 });
 $('#lobbyStart').addEventListener('click', () => {
-  if (!Net.isHost) return;
-  Net.guests.forEach(g => g.conn.send({t:'start'}));
-  netStart();
+  if (Net.isHost) netStartRace();
 });
-// por enquanto só avisa; a corrida online de verdade entra na etapa 5
-function netStart(){
-  lobbyStatus('Todos prontos! 🏁 (a corrida online entra na etapa 5)');
+
+// ---- corrida online ----
+// cada aparelho dirige o próprio kart e conta onde ele está;
+// o dono junta a posição de todo mundo e repassa pra todo mundo
+const NET_HZ = 12;      // posições por segundo (pouco, pra economizar o TURN)
+const INTERP = 0.15;    // mostra os outros 150 ms "atrasados" pra o movimento ficar liso
+
+// dono: sorteia as cores dos karts e dá a largada pra todos
+function netStartRace(){
+  const list = Net.players.filter(p => p.ch >= 0).sort((a, b) => a.num - b.num);
+  assignKartColors(list.map(p => CHARS[p.ch]));
+  const go = {t:'go', laps:Net.laps, list:list.map(p => ({num:p.num, ch:p.ch})), colors:list.map(p => CHARS[p.ch].kart)};
+  Net.guests.forEach(g => g.conn.send(go));
+  startOnlineRace(go);
 }
+function startOnlineRace(go){
+  netLog('corrida online: largada com', go.list.length, 'jogadores');
+  if (!go.list.some(p => p.num === Net.me)) return lobbyStatus('A corrida começou sem você: escolha um piloto pra próxima!');
+  initAudio();
+  clearRace();
+  Race.online = true; Race.netT = 0;
+  Race.laps = go.laps;
+  setResultButtons();
+  if (W !== W_WIDE) buildTrack(W_WIDE);
+
+  go.list.forEach((p, k) => {
+    const ch = CHARS[p.ch];
+    ch.kart = go.colors[k];
+    const isP = p.num === Net.me;
+    // todos montam o mesmo grid, na ordem dos números dos jogadores
+    const idx = N - (6 + k*5), lat = k%2 ? 3.5 : -3.5;
+    const m = buildKart(ch);
+    if (!isP){ const s = nameSprite(ch.name); s.position.y = 3.4; m.g.add(s); }
+    const r = {
+      ch, isP, m, num:p.num, remote:!isP, snaps:[], last:null,
+      x: P[idx].x + NR[idx].x*lat,
+      z: P[idx].z + NR[idx].z*lat,
+      a: Math.atan2(T[idx].x, T[idx].z),
+      speed: 0, idx, total: idx - N,
+      lap: 1, finished: false, finishTime: 0,
+      item: null, pending: null, rolling: 0,
+      boost: 0, spin: 0, steer: 0, rank: k+1, maxMul: 1,
+      // piloto automático depois de cruzar a chegada
+      ai: {lane: lat, laneT: 2, itemDelay: 2, skill: 1, D: DIFF.medio},
+    };
+    Race.racers.push(r);
+    if (isP) Race.player = r;
+  });
+
+  Race.time = 0;
+  Race.countT = 3.999;
+  Race.lastCount = 4;
+  Race.state = 'count';
+
+  ['#lobby', '#results', '#netLogBox'].forEach(s => $(s).classList.add('hidden'));
+  $('#hud').classList.remove('hidden');
+  $('#touch').classList.toggle('hidden', !isTouch);
+  $('#itemIcon').textContent = '';
+  updateHUD();
+  placeCam(true, 0);
+}
+// sai da corrida online (volta pra sala ou a sala caiu)
+function stopOnlineRace(){
+  if (!Race.online) return;
+  Race.online = false;
+  clearRace();
+  Race.state = 'menu';
+  ['#results', '#hud', '#touch'].forEach(s => $(s).classList.add('hidden'));
+  $('#count').textContent = '';
+}
+// alguém saiu da sala no meio da corrida: some com o kart dele
+function dropMissingRacers(){
+  if (!Race.online) return;
+  Race.racers = Race.racers.filter(r => {
+    const stay = !r.remote || Net.players.some(p => p.num === r.num);
+    if (!stay) scene.remove(r.m.g);
+    return stay;
+  });
+}
+// resultado: online mostra "Voltar à sala"; offline, "De novo" e "Trocar piloto"
+function setResultButtons(){
+  $('#again').classList.toggle('hidden', Race.online);
+  $('#toMenu').classList.toggle('hidden', Race.online);
+  $('#backLobby').classList.toggle('hidden', !Race.online);
+}
+
+// posição de um kart em poucos números: [jogador, x, z, ângulo, velocidade, volante, rodopio, turbo, progresso, chegou, tempo, volta]
+const r2 = v => Math.round(v * 100) / 100;
+function packRacer(r){
+  return [r.num, r2(r.x), r2(r.z), r2(r.a), r2(r.speed), r2(r.steer), r2(Math.max(r.spin, 0)), r2(Math.max(r.boost, 0)),
+    r.total, r.finished ? 1 : 0, r2(r.finishTime), r.lap];
+}
+// chegou a posição de outro jogador: guarda como "foto" com a hora em que chegou
+function netGotState(s){
+  const r = Race.racers.find(r => r.remote && r.num === s[0]);
+  if (!r) return;
+  r.last = s;
+  r.snaps.push({t: performance.now()/1000, s});
+  if (r.snaps.length > 20) r.snaps.shift();
+}
+// manda a minha posição (convidado → dono) ou a de todos (dono → convidados)
+function netTick(dt){
+  Race.netT -= dt;
+  if (Race.netT > 0) return;
+  Race.netT = 1 / NET_HZ;
+  const me = packRacer(Race.player);
+  if (Net.isHost){
+    const k = Race.racers.map(r => r.isP ? me : r.last).filter(Boolean);
+    Net.guests.forEach(g => { if (g.conn.open) g.conn.send({t:'s', k}); });
+  } else if (Net.host && Net.host.open){
+    Net.host.send({t:'m', s:me});
+  }
+}
+// kart de outro jogador: anda entre as duas últimas fotos recebidas (fica liso mesmo recebendo só 12 por segundo)
+function netFollow(r, dt){
+  const q = r.snaps;
+  if (q.length){
+    const t = performance.now()/1000 - INTERP;
+    let a = q[0], b = q[q.length - 1];
+    for (let k = q.length - 1; k > 0; k--){
+      if (q[k-1].t <= t){ a = q[k-1]; b = q[k]; break; }
+    }
+    const u = b.t > a.t ? clamp((t - a.t)/(b.t - a.t), 0, 1) : 1;
+    const A = a.s, B = b.s, was = r.finished;
+    r.x = lerp(A[1], B[1], u);
+    r.z = lerp(A[2], B[2], u);
+    r.a = A[3] + wrapAng(B[3] - A[3]) * u;
+    r.speed = B[4]; r.steer = B[5]; r.spin = B[6]; r.boost = B[7];
+    r.total = B[8]; r.finished = !!B[9]; r.finishTime = B[10]; r.lap = B[11];
+    while (q.length > 2 && q[1].t < t) q.shift();   // joga fora fotos velhas
+    // alguém cruzou a chegada enquanto o resultado já está na tela: atualiza a lista
+    if (r.finished && !was && !$('#results').classList.contains('hidden')) showResults();
+  }
+  r.idx = nearestIdx(r.x, r.z, r.idx);
+  const lat = (r.x - P[r.idx].x)*NR[r.idx].x + (r.z - P[r.idx].z)*NR[r.idx].z;
+  r.m.body.rotation.y = r.spin > 0 ? (1 - r.spin/SPIN) * Math.PI*4 : 0;
+  kartVisual(r, dt, Math.abs(lat) > W/2 + 1.4);
+}
+
+// ---- itens no online ----
+// cada um avisa o que fez (pegou caixa, lançou item, foi atingido); o dono repassa pros outros
+function netEvent(ev){
+  if (!Race.online) return;
+  ev.t = 'ev'; ev.from = Net.me;
+  if (Net.isHost) Net.guests.forEach(g => { if (g.conn.open) g.conn.send(ev); });
+  else if (Net.host && Net.host.open) Net.host.send(ev);
+}
+// lancei um item: ganha um nome único e os outros criam o mesmo item na tela deles
+let netItemSeq = 0;
+function netItem(it){
+  if (!Race.online || !it.owner.isP) return;
+  it.id = Net.me + '-' + (++netItemSeq);
+  netEvent({e:it.type, id:it.id, x:r2(it.x), z:r2(it.z), immune:it.immune,
+    sx:r2(it.sx || 0), sz:r2(it.sz || 0), fly:it.fly || 0,
+    a:r2(it.a || 0), spd:r2(it.spd || 0), target:it.target ? it.target.num : 0});
+}
+function applyEvent(ev){
+  const owner = Race.racers.find(r => r.num === ev.from);
+  if (ev.e === 'box'){
+    const b = boxes[ev.i];
+    if (b){ b.active = false; b.mesh.visible = false; b.respawn = 3; }
+  } else if (ev.e === 'banana' && owner){
+    const m = makeBanana();
+    const it = {type:'banana', mesh:m, id:ev.id, x:ev.x, z:ev.z, owner, immune:ev.immune, ttl:60};
+    if (ev.fly > 0){
+      Object.assign(it, {sx:ev.sx, sz:ev.sz, fly:ev.fly, flyT:ev.fly});
+      m.position.set(ev.sx, 1, ev.sz);
+    } else m.position.set(ev.x, 0, ev.z);
+    Race.items.push(it);
+  } else if (ev.e === 'tubarao' && owner){
+    const target = Race.racers.find(r => r.num === ev.target) || null;
+    Race.items.push({type:'tubarao', mesh:makeShark(), id:ev.id, x:ev.x, z:ev.z, a:ev.a, spd:ev.spd,
+      owner, immune:ev.immune, ttl:4.5, target, idx:nearestIdx(ev.x, ev.z, owner.idx)});
+    if (target && target.isP) toast(`🦈 ${owner.ch.name} soltou um tubarãozinho em você!`);
+  } else if (ev.e === 'gone'){
+    // alguém foi atingido: o item some em todas as telas
+    const k = Race.items.findIndex(it => it.id === ev.id);
+    if (k < 0) return;
+    const it = Race.items[k];
+    scene.remove(it.mesh); Race.items.splice(k, 1);
+    const victim = Race.racers.find(r => r.num === ev.victim);
+    if (victim && it.owner.isP) hitByMeToast(victim, it.type);
+  }
+}
+
+$('#backLobby').addEventListener('click', () => {
+  stopOnlineRace();
+  if (!Net.peer) return showScreen('#onlineMenu');
+  showScreen('#lobby');
+  renderLobby();
+  lobbyStatus(Net.isHost ? 'Toque em COMEÇAR! pra correr de novo.' : 'Esperando o dono começar...');
+});
 // no celular abre o "compartilhar" (WhatsApp etc.); no PC copia o link
 $('#copyLink').addEventListener('click', () => {
   const url = roomLink(), btn = $('#copyLink');
@@ -1956,16 +2175,17 @@ function frame(now){
         SFX.go();
         setTimeout(() => { $('#count').textContent = ''; }, 800);
       }
-      Race.racers.forEach(r => physics(r, 0, {throttle:false, brake:false, steer:0}));
+      Race.racers.forEach(r => r.remote ? netFollow(r, 0) : physics(r, 0, {throttle:false, brake:false, steer:0}));
     } else {
       Race.time += dt;
       // elástico
       Race.racers.forEach(r => {
-        if (r.isP){ r.maxMul = 1; return; }
+        if (r.isP || r.remote){ r.maxMul = 1; return; }
         const diff = r.total - Race.player.total;
         r.maxMul = r.ai.skill * (diff > 60 ? r.ai.D.ahead : diff < -60 ? r.ai.D.behind : 1) * (r.finished ? 0.8 : 1);
       });
       Race.racers.forEach(r => {
+        if (r.remote) return netFollow(r, dt);   // kart de outro jogador: a posição vem pela rede
         const c = (r.isP && Race.state === 'race') ? playerControl() : aiControl(r, dt);
         physics(r, dt, c);
       });
@@ -1977,9 +2197,12 @@ function frame(now){
           const a = Race.racers[i], b = Race.racers[j];
           const dx = b.x - a.x, dz = b.z - a.z, d = Math.hypot(dx,dz);
           if (d < 2.4 && d > 0.001){
+            // kart de outro jogador não é empurrado aqui (o aparelho dele cuida); o meu sai inteiro
+            const wa = a.remote ? 0 : (b.remote ? 2 : 1), wb = b.remote ? 0 : (a.remote ? 2 : 1);
+            if (!wa && !wb) continue;
             const push = (2.4 - d)/2, nx = dx/d, nz = dz/d;
-            a.x -= nx*push; a.z -= nz*push;
-            b.x += nx*push; b.z += nz*push;
+            a.x -= nx*push*wa; a.z -= nz*push*wa;
+            b.x += nx*push*wb; b.z += nz*push*wb;
             a.speed *= 0.98; b.speed *= 0.98;
             if ((a.isP || b.isP) && Race.bumpCD <= 0){ SFX.bump(); Race.bumpCD = 0.4; }
           }
@@ -1988,11 +2211,13 @@ function frame(now){
 
       // caixas → itens
       Race.racers.forEach(r => {
-        boxes.forEach(b => {
+        if (r.remote) return;   // o aparelho de cada jogador cuida das caixas que ele pega
+        boxes.forEach((b, bi) => {
           if (!b.active) return;
           const dx = b.mesh.position.x - r.x, dz = b.mesh.position.z - r.z;
           if (dx*dx + dz*dz < 5.3){
             b.active = false; b.mesh.visible = false; b.respawn = 3;
+            netEvent({e:'box', i:bi});
             if (!r.item && r.rolling <= 0){
               r.pending = pickItem(r);
               r.rolling = r.isP ? 1.0 : 0.3;
@@ -2052,10 +2277,15 @@ function frame(now){
 
         if (!dead){
           for (const r of Race.racers){
+            if (r.remote) continue;   // quem foi atingido avisa: cada aparelho só confere o próprio kart
             if (r === it.owner && it.immune > 0) continue;
             const dx = r.x - it.x, dz = r.z - it.z;
             const rad = it.type === 'tubarao' ? 4 : 2.6;
-            if (dx*dx + dz*dz < rad*rad){ hit(r, it.type, it.owner); dead = true; break; }
+            if (dx*dx + dz*dz < rad*rad){
+              hit(r, it.type, it.owner); dead = true;
+              if (it.id) netEvent({e:'gone', id:it.id, victim:r.num});
+              break;
+            }
           }
         }
         if (dead){ scene.remove(it.mesh); Race.items.splice(k,1); }
@@ -2082,6 +2312,8 @@ function frame(now){
       if (crownSprite.parent !== leader.m.g) leader.m.g.add(crownSprite);
       crownSprite.position.y = (leader.isP ? 3.4 : 4.6) + Math.sin(now * 0.004) * 0.15;
     } else if (crownSprite.parent) crownSprite.parent.remove(crownSprite);
+
+    if (Race.online) netTick(dt);
 
     if (Race.state !== 'done' || Race.doneT > 0) updateHUD();
     if (Race.state === 'done'){
