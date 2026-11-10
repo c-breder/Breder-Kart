@@ -70,14 +70,11 @@ body.touch #mute{bottom:auto;top:88px;left:12px;transform:none}
 h1{margin:0;font-size:clamp(40px,9vw,72px);line-height:1}
 .sub{margin:6px 0 14px;font-size:18px;font-weight:600;text-align:center}
 #cards{display:flex;gap:12px;flex-wrap:wrap;justify-content:center}
-.card{width:150px;background:#fff;border-radius:20px;padding:10px 10px 12px;text-align:center;border:5px solid transparent;box-shadow:0 5px 0 rgba(29,35,64,.35);cursor:pointer;transition:transform .15s}
+.card{width:146px;background:#fff;border-radius:20px;padding:10px 10px 12px;text-align:center;border:5px solid transparent;box-shadow:0 5px 0 rgba(29,35,64,.35);cursor:pointer;transition:transform .15s}
 .card.sel{border-color:#ffcf1f;transform:translateY(-6px) scale(1.04)}
 .card svg{width:124px;height:auto;display:block;margin:2px auto 8px}
 .card .ph{width:124px;height:150px;object-fit:cover;display:block;margin:2px auto 8px;border-radius:12px;background:#eee}
-.resRow .av img{width:44px;height:44px;object-fit:cover;display:block}
-.card{width:146px}
 .card input{width:100%;font-family:inherit;font-size:17px;font-weight:800;text-align:center;border:2px solid #ddd;border-radius:10px;padding:4px;color:#000;background:#fff;-webkit-text-fill-color:#000;color-scheme:light;user-select:text;-webkit-user-select:text}
-.card .tag{font-size:12px;color:#667;font-weight:600;margin-top:4px}
 .row{margin-top:16px;font-size:18px;font-weight:800}
 select{font-family:inherit;font-size:17px;font-weight:800;border-radius:10px;border:3px solid #fff;padding:2px 8px}
 .big{margin-top:16px;font-family:inherit;font-size:30px;font-weight:800;color:#1d2340;background:#ffcf1f;border:none;border-radius:18px;padding:6px 40px;box-shadow:0 6px 0 #c48b00;cursor:pointer}
@@ -89,6 +86,7 @@ select{font-family:inherit;font-size:17px;font-weight:800;border-radius:10px;bor
 .resRow .p{width:42px;font-size:26px}
 .resRow .av{width:44px;height:44px;border-radius:50%;overflow:hidden;display:inline-block;flex:none}
 .resRow .av svg{width:50px;height:auto;margin:0 0 0 -3px}
+.resRow .av img{width:44px;height:44px;object-fit:cover;display:block}
 .resRow .t{margin-left:auto;font-weight:600;font-size:16px;color:#556}
 .resRow.me{color:#d6247a}
 #resMsg{font-size:24px;text-align:center;margin-top:6px}
@@ -113,9 +111,10 @@ select{font-family:inherit;font-size:17px;font-weight:800;border-radius:10px;bor
   <button id="mute">🔊</button>
 </div>
 
-<!-- Menu -->
+<!-- Aviso pra girar o celular (só aparece em pé) -->
 <div id="rotate" class="out">Gire o celular 🔄</div>
 
+<!-- Menu -->
 <div id="menu" class="overlay">
   <h1 class="out">Breder Kart 🏁</h1>
   <div class="sub out">Escolha quem você vai ser e contra quem quer correr!</div>
@@ -206,14 +205,16 @@ const CHARS = [
   {name:'Luiza',      file:'Luiza',      eye:EYE_G, hair:BLOND, shirt:'#2f6fdb'},
   {name:'Davi',       file:'Davi',       eye:EYE_G, hair:BLOND, shirt:'#2f6fdb', boy:true},
   {name:'Sophia',     file:'Sophia',     eye:'#7f9c86', hair:'#45302a', shirt:'#a8655a'},
+  {name:'João Victor', file:'João Victor', eye:'#3d7fd1', hair:'#a8843f', shirt:'#f4f4f4', boy:true},
 ];
-CHARS.forEach(c => c.kart = '#888888');
+CHARS.forEach(c => c.kart = '#888888');   // cor provisória; a de verdade é sorteada a cada corrida
 if (prefs.nomes) prefs.nomes.forEach((n,i) => { if (n && CHARS[i]) CHARS[i].name = n; });
 
+const MAX_RIVALS = 3;
 let chosen = prefs.escolha;
 if (!(chosen >= 0 && chosen < CHARS.length)) chosen = 0;
 let rivals = prefs.rivais && prefs.rivais.length === CHARS.length ? prefs.rivais : CHARS.map(() => false);
-if (rivals.filter(Boolean).length > 3) rivals = CHARS.map(() => false);
+if (rivals.filter(Boolean).length > MAX_RIVALS) rivals = CHARS.map(() => false);
 
 /* ============================================================
    3. Sprites pixel-art (SVG)
@@ -225,9 +226,10 @@ function shade(hex, f){
   else { r += (255-r)*f; g += (255-g)*f; b += (255-b)*f; }
   return '#' + ((1<<24) | (Math.round(r)<<16) | (Math.round(g)<<8) | Math.round(b)).toString(16).slice(1);
 }
+// espelha meia grade pra formar o desenho inteiro
 const mir = half => half.map(r => r + [...r].reverse().join(''));
 
-// franja de lado, igual ao retrato grande
+// --- meninas: sprites da corrida (frente com franja de lado; costas espelhada) ---
 const GRID_FRONT = [
   ".....hHHHHh.....",
   "...hHHLLLLHHh...",
@@ -251,7 +253,7 @@ const GRID_FRONT = [
 const GRID_BACK = mir([
   ".....hHH","...hHHLL","..hHHLLH","..HHHHHH",".hHHHHHH",".HHHHhHH",".HHHHHHh","HHHhHHHH",".HHHHHhH",".HHHHHHH","hhHHHhHH","TTTHHHHH","TTTHHHhH","TTTHHHHH","TTTThHHH","TTTTHHHH","TTTTTHHH"
 ]);
-// franja de lado: desce da esquerda pra direita (não é espelhada)
+// --- meninas: retrato grande (franja de lado e contorno em escadinha) ---
 const GRID_BIG = [
   "......OOOOOO......",
   "....OOHHHHHHOO....",
@@ -273,6 +275,7 @@ const GRID_BIG = [
   "OHOTTTTTTTTTTTTOHO",
   "OOTTTTTTTTTTTTTTOO"
 ];
+// --- menino: cabelo curto e orelhas ---
 const GRID_BIG_BOY = [
   "......OOO.........",".....OHHHO..O.....","....OHHHHOOOHO.OO.","...OHHHHHHHHHHOHO.","..OHHHHHHHHHHHHHO.","..OHHHHHHHHHHHHHO.",".OHHHHHHHHHHHHHHO.",".OHHHOHHHHOHHHOHO.","..OHOSOHOSSOHOSHO.",
   "..OHSOOSSSSOOSHO..","..OsSWISSSSIWSsO..","..OsSIISSSSIISsO..","...OBSSSSSSSSBO...","...OSSSSMMSSSSO...","....OSSSSSSSSO....",".....OOSSSSOO.....","..OTTTTNNNNTTTTO..",".OTTTTTCCCCTTTTTO.","OTTTTTTTTTTTTTTTTO","OTTTTTTTTTTTTTTTTO"
@@ -283,6 +286,7 @@ const GRID_FRONT_BOY = mir([
 const GRID_BACK_BOY = mir([
   "....H.HH","...hHHHH","..hHHLLH","..HHHHHH","..hHHHHH","..HHHhHH","..HHHHHh","..sHHHHH","..sHHhHH","...HHHHH","......sS","..TTTTTT","TTTTTTTT","TTTTTTtT","TTTTTTTT","TTTTTTTT","TTTTTTTT"
 ]);
+// --- cacheada (nenhuma personagem usa ainda; fica pra quem tiver curly:true) ---
 const GRID_CURLY = mir([
   "...OO.OOO","..OHHOHHH",".OHHHHHHH","OHHHHHHHH","OHHHHHHHH","OHHHHHHHO","OHHHHHOOS","OHHOOOSSS","OHHOSOOSS","OHHOSWISS","OHHOSIISS","OHHOBSSSS","OHHOSSSSM","OHHHOSSSS","OHHHHOOSS","OHHHOTTNN","OHOTTTTCC","OTTTTTTCC","OTTTTTTCC"
 ]);
@@ -326,42 +330,6 @@ function pixelSVG(c, g){
   }));
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="-1 -1 ${w+2} ${h+2}" width="${(w+2)*20}" height="${(h+2)*20}" shape-rendering="crispEdges">${out}</svg>`;
 }
-const PHOTO_EXT = ['jpg','jpeg','png','webp','JPG','JPEG','PNG','WEBP'];
-const photoCache = {};
-function findPhoto(c, cb){
-  const e = photoCache[c.file];
-  if (e && e.done){ cb(e.url); return; }
-  if (e){ e.cbs.push(cb); return; }
-  const st = photoCache[c.file] = {done:false, url:null, cbs:[cb]};
-  const base = 'fotos/' + encodeURIComponent(c.file) + '.';
-  let i = 0;
-  const tryNext = () => {
-    if (i >= PHOTO_EXT.length){ st.done = true; st.cbs.forEach(f => f(null)); return; }
-    const url = base + PHOTO_EXT[i++], im = new Image();
-    im.onload = () => { st.done = true; st.url = url; st.cbs.forEach(f => f(url)); };
-    im.onerror = tryNext;
-    im.src = url;
-  };
-  tryNext();
-}
-function photoEl(c, cls){
-  const hit = photoCache[c.file];
-  if (hit && hit.done && hit.url){
-    const img = document.createElement('img');
-    img.className = cls || 'ph'; img.alt = c.name; img.src = hit.url;
-    return img;
-  }
-  const t = document.createElement('template');
-  t.innerHTML = portraitSVG(c);
-  const el = t.content.firstChild;
-  findPhoto(c, url => {
-    if (!url || !el.parentNode) return;
-    const img = document.createElement('img');
-    img.className = cls || 'ph'; img.alt = c.name; img.src = url;
-    el.replaceWith(img);
-  });
-  return el;
-}
 function portraitSVG(c){
   const g = c.curly ? GRID_CURLY : c.boy ? GRID_BIG_BOY : GRID_BIG;
   const black = c.hair === '#191314', bs = c.shirt === '#1c1c22';
@@ -393,23 +361,53 @@ function portraitSVG(c){
   }));
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="-1 -1 20 ${g.length+1}" width="${20*16}" height="${(g.length+1)*16}" shape-rendering="crispEdges">${o}</svg>`;
 }
+// SVG em string → elemento
+function svgEl(svg){
+  const t = document.createElement('template');
+  t.innerHTML = svg;
+  return t.content.firstChild;
+}
+
+/* --- Fotos reais: fotos/<file>.<ext>; enquanto procura (ou se não achar) fica o pixel art --- */
+const PHOTO_EXT = ['jpg','jpeg','png','webp','JPG','JPEG','PNG','WEBP'];
+const photoCache = {};
+function findPhoto(c, cb){
+  const e = photoCache[c.file];
+  if (e && e.done){ cb(e.url); return; }
+  if (e){ e.cbs.push(cb); return; }
+  const st = photoCache[c.file] = {done:false, url:null, cbs:[cb]};
+  const base = 'fotos/' + encodeURIComponent(c.file) + '.';
+  let i = 0;
+  const tryNext = () => {
+    if (i >= PHOTO_EXT.length){ st.done = true; st.cbs.forEach(f => f(null)); return; }
+    const url = base + PHOTO_EXT[i++], im = new Image();
+    im.onload = () => { st.done = true; st.url = url; st.cbs.forEach(f => f(url)); };
+    im.onerror = tryNext;
+    im.src = url;
+  };
+  tryNext();
+}
+function photoImg(c, url, cls){
+  const img = document.createElement('img');
+  img.className = cls; img.alt = c.name; img.src = url;
+  return img;
+}
+// começa com o pixel art e troca pela foto quando ela carregar (nunca mostra <img> quebrada)
+function photoEl(c, cls){
+  cls = cls || 'ph';
+  const hit = photoCache[c.file];
+  if (hit && hit.done && hit.url) return photoImg(c, hit.url, cls);
+  const el = svgEl(portraitSVG(c));
+  findPhoto(c, url => {
+    if (url && el.parentNode) el.replaceWith(photoImg(c, url, cls));
+  });
+  return el;
+}
 
 /* ============================================================
    4. Áudio
    ============================================================ */
 let AC = null, engOsc = null, engGain = null, muted = false;
-// tela cheia + trava em paisagem (Android e iPad; o navegador só deixa depois de um toque)
-function goFullscreen(){
-  if (!isTouch) return;
-  const el = document.documentElement;
-  const req = el.requestFullscreen || el.webkitRequestFullscreen;
-  if (!req || document.fullscreenElement || document.webkitFullscreenElement) return;
-  try {
-    Promise.resolve(req.call(el, {navigationUI:'hide'}))
-      .then(() => screen.orientation && screen.orientation.lock && screen.orientation.lock('landscape'))
-      .catch(() => {});
-  } catch (_) {}
-}
 function initAudio(){
   if (AC) { AC.resume && AC.resume(); return; }
   try {
@@ -486,7 +484,9 @@ const LM = (c,o) => new THREE.MeshLambertMaterial(Object.assign({color:c}, o||{}
    ============================================================ */
 const RAW = [[0,40],[0,-60],[4,-110],[24,-140],[60,-150],[92,-132],[102,-98],[90,-66],[92,-34],[108,-6],[112,36],[96,72],[60,88],[22,80],[4,60]];
 const SC = 1.6, N = 800;
+// largura: estreita no Difícil, larga no Fácil e no Médio
 const W_HARD = 17, W_WIDE = 25;
+const widthFor = mode => mode === 'dificil' ? W_HARD : W_WIDE;
 let W = W_HARD;
 const curve = new THREE.CatmullRomCurve3(RAW.map(p => new THREE.Vector3(p[0]*SC, 0, p[1]*SC)), true, 'centripetal');
 
@@ -518,7 +518,9 @@ function nearestGlobal(x, z){
   return {i:best, d:Math.sqrt(bd)};
 }
 
+// grupo com as partes da pista que mudam com a largura (refeito em buildTrack)
 let trackGroup = new THREE.Group(); scene.add(trackGroup);
+// faixa ao longo da pista, de "inner" até "outer" (distância do centro)
 function ribbon(inner, outer, y, vScale, mat){
   const pos=[], uv=[], nor=[], ind=[];
   for (let i=0;i<=N;i++){
@@ -558,22 +560,6 @@ const curbT = canvasTex(2,2, g => {
 });
 curbT.magFilter = curbT.minFilter = THREE.NearestFilter;
 curbT.wrapS = curbT.wrapT = THREE.RepeatWrapping;
-
-
-// grama
-const grassT = canvasTex(256,256, (g,w,h) => {
-  for (let i=0;i<8;i++){ g.fillStyle = i%2 ? '#5cb83a' : '#69c646'; g.fillRect(0, i*h/8, w, h/8); }
-  for (let i=0;i<3500;i++){
-    g.fillStyle = Math.random()<0.5 ? 'rgba(40,110,30,.35)' : 'rgba(150,225,95,.3)';
-    g.fillRect(Math.random()*w, Math.random()*h, 2, 3);
-  }
-});
-grassT.wrapS = grassT.wrapT = THREE.RepeatWrapping;
-grassT.repeat.set(50,50);
-const grass = new THREE.Mesh(new THREE.PlaneGeometry(1400,1400), LM(0xffffff, {map:grassT}));
-grass.rotation.x = -Math.PI/2;
-grass.position.set(CX, 0, CZ);
-scene.add(grass);
 
 // largada
 const a0 = Math.atan2(T[0].x, T[0].z);
@@ -619,24 +605,26 @@ const crowdT = canvasTex(256,64, (g,w,h) => {
 });
 crowdT.wrapS = THREE.RepeatWrapping;
 function stands(){
-for (let i=18;i<=100;i+=21){
-  const g = new THREE.Group(), p = P[i];
-  g.position.copy(p); g.rotation.y = Math.atan2(T[i].x, T[i].z);
-  trackGroup.add(g);
-  for (let k=0;k<3;k++){
-    const len = SEG*20;
-    const t = crowdT.clone(); t.needsUpdate = true; t.repeat.set(len/12, 1);
-    const x = W/2 + 7 + k*3;
-    const m = new THREE.Mesh(new THREE.BoxGeometry(3, 1.6*(k+1), len),
-      [LM(0x8a8f9c),LM(0x8a8f9c),LM(0x9aa0ad),LM(0x8a8f9c),LM(0x8a8f9c),LM(0x8a8f9c)]);
-    m.position.set(x, 0.8*(k+1), 0); g.add(m);
-    const front = new THREE.Mesh(new THREE.PlaneGeometry(len, 1.6), LM(0xffffff, {map:t}));
-    front.position.set(x-1.51, 1.6*(k+1)-0.8, 0); front.rotation.y = -Math.PI/2; g.add(front);
+  for (let i=18;i<=100;i+=21){
+    const g = new THREE.Group(), p = P[i];
+    g.position.copy(p); g.rotation.y = Math.atan2(T[i].x, T[i].z);
+    trackGroup.add(g);
+    for (let k=0;k<3;k++){
+      const len = SEG*20;
+      const t = crowdT.clone(); t.needsUpdate = true; t.repeat.set(len/12, 1);
+      const x = W/2 + 7 + k*3;
+      const m = new THREE.Mesh(new THREE.BoxGeometry(3, 1.6*(k+1), len),
+        [LM(0x8a8f9c),LM(0x8a8f9c),LM(0x9aa0ad),LM(0x8a8f9c),LM(0x8a8f9c),LM(0x8a8f9c)]);
+      m.position.set(x, 0.8*(k+1), 0); g.add(m);
+      const front = new THREE.Mesh(new THREE.PlaneGeometry(len, 1.6), LM(0xffffff, {map:t}));
+      front.position.set(x-1.51, 1.6*(k+1)-0.8, 0); front.rotation.y = -Math.PI/2; g.add(front);
+    }
+    const roof = new THREE.Mesh(new THREE.BoxGeometry(10, 0.4, SEG*20), LM(0xff5d8f));
+    roof.position.set(W/2+10, 7.5, 0); g.add(roof);
   }
-  const roof = new THREE.Mesh(new THREE.BoxGeometry(10, 0.4, SEG*20), LM(0xff5d8f));
-  roof.position.set(W/2+10, 7.5, 0); g.add(roof);
 }
-}
+
+// refaz tudo que depende da largura (W): asfalto, zebras, areia, largada, pórtico e arquibancadas
 const asphaltM = LM(0xffffff, {map:asphalt}), curbM = LM(0xffffff, {map:curbT}), sandM = LM(0xe9d48a), checkerM = LM(0xffffff, {map:checker});
 function buildTrack(w){
   scene.remove(trackGroup);
@@ -652,9 +640,25 @@ function buildTrack(w){
   sl.rotation.order = 'YXZ'; sl.rotation.set(-Math.PI/2, a0, 0); sl.position.set(P[0].x, 0.05, P[0].z);
   trackGroup.add(sl);
   gantry(); stands();
+  // na 1ª chamada as caixas ainda não existem (boxes é declarado na seção 7)
   try { placeBoxes(); } catch (e) {}
 }
 buildTrack(W_HARD);
+
+// grama
+const grassT = canvasTex(256,256, (g,w,h) => {
+  for (let i=0;i<8;i++){ g.fillStyle = i%2 ? '#5cb83a' : '#69c646'; g.fillRect(0, i*h/8, w, h/8); }
+  for (let i=0;i<3500;i++){
+    g.fillStyle = Math.random()<0.5 ? 'rgba(40,110,30,.35)' : 'rgba(150,225,95,.3)';
+    g.fillRect(Math.random()*w, Math.random()*h, 2, 3);
+  }
+});
+grassT.wrapS = grassT.wrapT = THREE.RepeatWrapping;
+grassT.repeat.set(50,50);
+const grass = new THREE.Mesh(new THREE.PlaneGeometry(1400,1400), LM(0xffffff, {map:grassT}));
+grass.rotation.x = -Math.PI/2;
+grass.position.set(CX, 0, CZ);
+scene.add(grass);
 
 // árvores
 (function trees(){
@@ -767,7 +771,8 @@ function svgTex(svg){
   img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
   return t;
 }
-function girlTex(ch){
+// texturas do piloto (frente e costas); a chave é ch.file porque Luiza e Davi têm as mesmas cores
+function charTex(ch){
   const key = ch.file;
   if (!TEX[key]) TEX[key] = {
     front: svgTex(pixelSVG(ch, ch.boy ? GRID_FRONT_BOY : GRID_FRONT)),
@@ -796,7 +801,7 @@ function buildKart(ch){
   flame.rotation.x = -Math.PI/2;
   flame.visible = false;
   // piloto
-  const tx = girlTex(ch);
+  const tx = charTex(ch);
   const back  = new THREE.Sprite(new THREE.SpriteMaterial({map:tx.back}));
   const front = new THREE.Sprite(new THREE.SpriteMaterial({map:tx.front}));
   back.scale.set(2.3, 2.43, 1);
@@ -823,7 +828,7 @@ const DIFF = {
 const ICON = {banana:'🍌', tubarao:'🦈', turbo:'🌶️'};
 
 const Race = {
-  racers: [], items: [], floaters: [],
+  racers: [], items: [],
   state: 'menu',
   time: 0, countT: 0, lastCount: 0,
   laps: 3, doneT: 0,
@@ -833,27 +838,19 @@ const Race = {
   menuAng: 0,
 };
 
-const AI_LINES   = ['"sai da frente!"','"buzina pra tua mãe!"','"tô indo, tô indo!"','"para de buzinar 😤"','"hoje não!"','"me deixa em paz 🙄"'];
+// respostas das rivais quando você buzina perto delas
+const AI_LINES = ['"sai da frente!"','"buzina pra tua mãe!"','"tô indo, tô indo!"','"para de buzinar 😤"','"hoje não!"','"me deixa em paz 🙄"'];
 
 function toast(t){
   const el = $('#toast');
   el.textContent = t; el.style.opacity = 1;
   Race.toastT = 1.8;
 }
-function statusSprite(r, key, text){
-  r.st = r.st || {};
-  if (!r.st[key]){
-    const sp = nameSprite(text);
-    sp.position.y = 4.6;
-    r.m.g.add(sp);
-    r.st[key] = sp;
-  }
-  return r.st[key];
-}
 
 /* ============================================================
    10. Construção do grid e da corrida
    ============================================================ */
+// cor do kart: sorteada a cada corrida, longe da cor da roupa (matiz > 45°) e sem repetir
 const KART_COLORS = ['#e8322f','#ff8a2a','#f5cf2a','#9be22d','#19b38a','#20c4e8','#2f6fdb','#7a4dff','#c33cf0','#ff4f9a','#ffffff','#25252b','#8b5a2b'];
 function hueOf(hex){
   const n = parseInt(hex.slice(1),16), r=(n>>16)/255, g=(n>>8&255)/255, b=(n&255)/255;
@@ -878,8 +875,7 @@ function assignKartColors(list){
 function clearRace(){
   Race.racers.forEach(r => scene.remove(r.m.g));
   Race.items.forEach(it => scene.remove(it.mesh));
-  Race.floaters.forEach(f => { scene.remove(f.sp); f.sp.material.dispose(); });
-  Race.racers = []; Race.items = []; Race.floaters.length = 0;
+  Race.racers = []; Race.items = [];
   boxes.forEach(b => { b.active = true; b.mesh.visible = true; });
 }
 
@@ -900,16 +896,17 @@ function startRace(){
   Race.laps = +$('#laps').value || 3;
   const me = chosen;
   const order = CHARS.map((_,i) => i).filter(i => i !== chosen && rivals[i]);
-  const grid = order.concat([me]).map((_,k) => ({
+  const all = order.concat([me]);
+  // posição na largada: rivais em zigue-zague, você por último
+  const grid = all.map((_,k) => ({
     off: 6 + k*5,
     lat: k === order.length ? -1 : (k%2 ? 3.5 : -3.5),
   }));
   const D = DIFF[mode] || DIFF.medio;
-  const tw = mode === 'dificil' ? W_HARD : W_WIDE;
-  if (tw !== W) buildTrack(tw);
-  assignKartColors(order.concat([me]).map(i => CHARS[i]));
+  if (widthFor(mode) !== W) buildTrack(widthFor(mode));
+  assignKartColors(all.map(i => CHARS[i]));
 
-  order.concat([me]).forEach((ci, k) => {
+  all.forEach((ci, k) => {
     const ch = CHARS[ci];
     const idx = N - grid[k].off;
     const isP = ci === me;
@@ -924,7 +921,6 @@ function startRace(){
       lap: 1, finished: false, finishTime: 0,
       item: null, pending: null, rolling: 0,
       boost: 0, spin: 0, steer: 0, rank: k+1, maxMul: 1,
-      dizzy: 0, love: 0, panic: 0,
       ai: {
         lane: grid[k].lat, laneT: 2, itemDelay: 2,
         skill: D.skill[k] || D.skill[D.skill.length-1], D,
@@ -933,7 +929,6 @@ function startRace(){
     Race.racers.push(r);
     if (isP) Race.player = r;
   });
-
 
   Race.time = 0;
   Race.countT = 3.999;
@@ -978,6 +973,19 @@ hold('#bL','left'); hold('#bR','right'); hold('#bUp','gas'); hold('#bDown','brak
 $('#bItem').addEventListener('pointerdown', e => { e.preventDefault(); useItem(Race.player); });
 $('#bHonk').addEventListener('pointerdown',  e => { e.preventDefault(); honk(); });
 document.addEventListener('contextmenu', e => e.preventDefault());
+
+// tela cheia + trava em paisagem (Android e iPad; o navegador só deixa depois de um toque)
+function goFullscreen(){
+  if (!isTouch) return;
+  const el = document.documentElement;
+  const req = el.requestFullscreen || el.webkitRequestFullscreen;
+  if (!req || document.fullscreenElement || document.webkitFullscreenElement) return;
+  try {
+    Promise.resolve(req.call(el, {navigationUI:'hide'}))
+      .then(() => screen.orientation && screen.orientation.lock && screen.orientation.lock('landscape'))
+      .catch(() => {});
+  } catch (_) {}
+}
 
 function honk(){
   const p = Race.player;
@@ -1088,7 +1096,6 @@ function hit(r, kind, by){
   }
 }
 
-
 /* ============================================================
    13. Física
    ============================================================ */
@@ -1105,23 +1112,9 @@ function physics(r, dt, c){
 
   const idx = nearestIdx(r.x, r.z, r.idx);
   const lat = (r.x - P[idx].x)*NR[idx].x + (r.z - P[idx].z)*NR[idx].z;
-  const off = Math.abs(lat) > W/2 + 1.4;
-
-  if (r.dizzy > 0){
-    r.dizzy -= dt;
-    steer = Math.sin(Race.time*5 + r.idx) * 0.9;
-    if (r.dizzy <= 0 && r.st && r.st.dizzy) r.st.dizzy.visible = false;
-  }
-  if (r.love > 0){
-    r.love -= dt;
-    if (r.love <= 0 && r.st && r.st.love) r.st.love.visible = false;
-  }
+  const off = Math.abs(lat) > W/2 + 1.4;   // fora da pista: velocidade máxima cai pra 45%
 
   let maxS = MAXS * r.maxMul;
-  if (r.panic > 0) maxS *= 0.85;
-  if (r.dizzy > 0) maxS *= 0.55;
-  if (r.love  > 0) maxS *= 0.35;
-
   if (r.boost > 0){
     r.boost -= dt;
     maxS = 52;
@@ -1142,6 +1135,7 @@ function physics(r, dt, c){
   r.x += Math.sin(r.a) * r.speed * dt;
   r.z += Math.cos(r.a) * r.speed * dt;
 
+  // muro invisível longe da pista
   if (Math.abs(lat) > W/2 + 28){
     const s = Math.sign(lat);
     r.x -= NR[idx].x * s * (Math.abs(lat) - (W/2+28));
@@ -1184,13 +1178,8 @@ function physics(r, dt, c){
     m.back.material.rotation = rot;
     m.front.material.rotation = rot;
   }
-  if (r.dizzy > 0) m.body.rotation.y = Math.sin(Race.time*9)*0.5;
-  else if (r.spin <= 0) m.body.rotation.y = 0;
+  if (r.spin <= 0) m.body.rotation.y = 0;
 
-  if (r.panic > 0){
-    m.body.rotation.z += Math.sin(Race.time*35)*0.18;
-    m.body.position.y += Math.abs(Math.sin(Race.time*18))*0.15;
-  }
   m.flame.visible = r.boost > 0;
   if (r.boost > 0){
     const s = 0.8 + Math.random()*0.5;
@@ -1330,8 +1319,8 @@ function buildCards(){
     const d = document.createElement('div');
     d.className = 'card' + (i === chosen ? ' sel' : '');
     d.innerHTML = `<input maxlength="16" value="${c.name.replace(/"/g,'&quot;')}">`;
-    if (i === chosen){ const t = document.createElement('template'); t.innerHTML = portraitSVG(c); d.prepend(t.content.firstChild); }
-    else d.prepend(photoEl(c, 'ph'));
+    // card escolhido mostra o pixel art; os outros, a foto (se existir)
+    d.prepend(i === chosen ? svgEl(portraitSVG(c)) : photoEl(c, 'ph'));
     d.addEventListener('click', e => {
       if (e.target.tagName === 'INPUT') return;
       chosen = i; buildCards();
@@ -1358,7 +1347,7 @@ function buildRivals(){
   rivals[chosen] = false;
   const n = others.filter(i => rivals[i]).length;
   const cnt = $('#rivCount');
-  cnt.textContent = n ? `Correndo contra ${n} ${n>1 ? 'rivais' : 'rival'} (máximo 3)` : 'Escolha pelo menos um rival';
+  cnt.textContent = n ? `Correndo contra ${n} ${n>1 ? 'rivais' : 'rival'} (máximo ${MAX_RIVALS})` : 'Escolha pelo menos um rival';
   cnt.style.color = n ? '' : '#ffe14d';
   others.forEach(i => {
     const b = document.createElement('button');
@@ -1367,8 +1356,8 @@ function buildRivals(){
       `<span class="dot" style="background:${CHARS[i].shirt}"></span>` +
       CHARS[i].name.replace(/</g,'&lt;');
     b.addEventListener('click', () => {
-      if (!rivals[i] && others.filter(k => rivals[k]).length >= 3){
-        cnt.textContent = 'Máximo de 3 rivais! Desmarque alguém primeiro';
+      if (!rivals[i] && n >= MAX_RIVALS){
+        cnt.textContent = `Máximo de ${MAX_RIVALS} rivais! Desmarque alguém primeiro`;
         cnt.style.color = '#ffe14d';
         cnt.animate([{transform:'scale(1)'},{transform:'scale(1.2)'},{transform:'scale(1)'}],{duration:400});
         return;
@@ -1384,11 +1373,12 @@ $('#hint').textContent = isTouch
   ? '▲ acelera · ▼ freia/ré · ◀ ▶ vira · 🎁 lança o item pra frente · 📯 buzina'
   : 'Setas ou WASD pra dirigir · ESPAÇO lança o item (segurando ↓ a banana vai pra trás) · H buzina';
 
-
+// modo salvo + pista do menu já na largura do modo escolhido
 if (prefs.modo && $('#diff').querySelector(`option[value="${prefs.modo}"]`)) $('#diff').value = prefs.modo;
-const syncWidth = () => { const tw = $('#diff').value === 'dificil' ? W_HARD : W_WIDE; if (tw !== W) buildTrack(tw); };
+const syncWidth = () => { const w = widthFor($('#diff').value); if (w !== W) buildTrack(w); };
 $('#diff').addEventListener('change', () => { syncWidth(); savePrefs(); });
 syncWidth();
+
 $('#go').addEventListener('click', startRace);
 $('#again').addEventListener('click', startRace);
 $('#toMenu').addEventListener('click', () => {
@@ -1552,7 +1542,7 @@ function frame(now){
         if (dead){ scene.remove(it.mesh); Race.items.splice(k,1); }
       }
       // limite de bananas ativas
-      if (Race.items.filter(i => i.type !== 'coin').length > 24){
+      if (Race.items.length > 24){
         const old = Race.items.findIndex(i => i.type === 'banana');
         if (old >= 0){ scene.remove(Race.items[old].mesh); Race.items.splice(old,1); }
       }
