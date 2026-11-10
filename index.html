@@ -97,6 +97,9 @@ select{font-family:inherit;font-size:17px;font-weight:800;border-radius:10px;bor
 .overlay input{font-family:inherit;font-size:17px;font-weight:800;border-radius:10px;border:3px solid #fff;padding:2px 8px;width:170px;color:#000;background:#fff;user-select:text;-webkit-user-select:text}
 .big:disabled{opacity:.5;cursor:default;transform:none}
 .overlay input[type=checkbox]{width:auto;vertical-align:middle}
+/* ❓ pequeno ao lado de cada opção do online: abre o tutorial na explicação dela */
+.qBtn{width:34px;height:34px;border-radius:50%;border:3px solid #fff;background:rgba(255,255,255,.45);font-size:16px;line-height:1;padding:0;cursor:pointer;vertical-align:middle;margin-top:16px}
+.row .qBtn{margin-top:0}
 .big.small{font-size:16px;padding:4px 16px;box-shadow:0 4px 0 #aab}
 /* registro da conexão na tela (pra investigar no celular, sem Console) */
 #netLogBox{position:fixed;left:8px;right:8px;bottom:8px;max-height:45vh;overflow:auto;margin:0;padding:8px 10px;background:rgba(0,0,0,.88);color:#9f9;font:12px/1.35 monospace;border-radius:10px;z-index:60;white-space:pre-wrap;user-select:text;-webkit-user-select:text}
@@ -196,7 +199,10 @@ select{font-family:inherit;font-size:17px;font-weight:800;border-radius:10px;bor
   <div class="sub out">Até 5 pessoas por sala</div>
   <div id="onlineMsg" class="hint out"></div>
 
-  <button id="openRoom" class="big">SALA ABERTA</button>
+  <div class="btns" style="align-items:center">
+    <button id="openRoom" class="big">SALA ABERTA</button>
+    <button class="qBtn" data-tut="open" aria-label="Como funciona a sala aberta">❓</button>
+  </div>
 
   <div class="row out">Criar sala:
     <select id="roomType">
@@ -204,12 +210,14 @@ select{font-family:inherit;font-size:17px;font-weight:800;border-radius:10px;bor
       <option value="password">Com senha</option>
     </select>
     <input id="newPass" type="password" placeholder="senha" class="hidden">
+    <button class="qBtn" data-tut="create" aria-label="Como criar uma sala">❓</button>
   </div>
   <button id="createRoom" class="big alt">CRIAR SALA</button>
 
   <div class="row out">Entrar com código:
     <input id="joinCode" placeholder="K7Q2-M9XA">
     <input id="joinPass" type="password" placeholder="senha (se tiver)">
+    <button class="qBtn" data-tut="join" aria-label="Como entrar numa sala">❓</button>
   </div>
   <button id="joinRoom" class="big alt">ENTRAR</button>
 
@@ -1596,7 +1604,7 @@ function onlineMsg(t){ $('#onlineMsg').textContent = t; if (t) netLog('tela:', t
 function lobbyStatus(t){ $('#lobbyStatus').textContent = t; netLog('tela:', t); }
 
 // registro da conexão: vai pro Console (F12) e pro painel "📋 Registro da conexão"
-const GAME_VERSION = '2026-11-10 l';   // aumentar a cada mudança, pra saber se o aparelho pegou a versão nova
+const GAME_VERSION = '2026-11-10 m';   // aumentar a cada mudança, pra saber se o aparelho pegou a versão nova
 const NET_LOG = ['Breder Kart versão ' + GAME_VERSION];
 if (TURN_USERNAME.startsWith('COLE_AQUI')) NET_LOG.push('⚠️ TURN sem senha: cole o username e a credential da Metered no index.html');
 function netLog(...a){
@@ -2096,16 +2104,19 @@ $('#copyLink').addEventListener('click', () => {
 });
 // ---- tutorial do online ----
 const TUTORIAL = [
-  {icon:'🌐', title:'Jogar online', text:'Corra com até 5 pessoas da família, cada uma no seu celular ou computador. Precisa de internet!'},
-  {icon:'🚪', title:'Sala aberta', text:'Uma sala que todo mundo encontra. Quem entra primeiro vira o dono 👑. Se o dono sair, a sala fecha.'},
-  {icon:'🔒', title:'Criar sala', text:'Uma sala só sua. "Só com link": entra quem receber o link. "Com senha": também precisa da senha. Toque em "Enviar link 🔗" pra mandar no WhatsApp.'},
-  {icon:'📩', title:'Entrar numa sala', text:'Recebeu um link? É só abrir! Ou digite o código (tipo K7Q2-M9XA) e a senha, se tiver.'},
-  {icon:'🏎️', title:'Sala de espera', text:'Escolha seu piloto: cada um só pode ser escolhido uma vez. O dono escolhe as voltas e toca em COMEÇAR! quando todos estiverem prontos.'},
-  {icon:'📶', title:'Não conectou?', text:'Tente de novo ou troque de rede (o Wi-Fi costuma funcionar melhor que o 4G).'},
+  {icon:'🌐', title:'Jogar online', text:'Corra com até 5 pessoas, cada uma no seu celular ou computador. Tem 3 jeitos de jogar juntos: 🚪 sala aberta, 🔗 sala por link e 🔒 sala fechada (com senha). Precisa de internet!'},
+  {icon:'🚪', title:'Sala aberta', text:'O jeito mais fácil! Todo mundo toca em SALA ABERTA e cai na mesma sala. Quem chega primeiro vira o dono 👑. Atenção: qualquer pessoa que abrir o jogo pode entrar. Se o dono sair, a sala fecha.'},
+  {icon:'🔗', title:'Sala por link: criar', text:'Em "Criar sala", deixe "Só com link" e toque em CRIAR SALA. Vai aparecer um código (tipo K7Q2-M9XA). Toque em "Enviar link 🔗" e mande pelo WhatsApp pra quem vai jogar.'},
+  {icon:'📩', title:'Sala por link: entrar', text:'Recebeu o link? É só abrir e tocar em ENTRAR! Também dá pra digitar o código em "Entrar com código". Só entra quem tem o link ou o código.'},
+  {icon:'🔒', title:'Sala fechada (com senha)', text:'Em "Criar sala", escolha "Com senha", invente uma senha e toque em CRIAR SALA. Mande o link e conte a senha só pra quem você quiser. Quem for entrar digita a senha antes de tocar em ENTRAR.'},
+  {icon:'🏎️', title:'Sala de espera', text:'Escolha seu piloto: cada um só pode ser escolhido uma vez. O dono 👑 escolhe as voltas e toca em COMEÇAR! quando todos estiverem prontos.'},
+  {icon:'📶', title:'Não conectou?', text:'Tente de novo ou troque de rede (o Wi-Fi costuma funcionar melhor que o 4G). Se tiver VPN ligada no aparelho (tipo Tailscale), desligue pra jogar.'},
 ];
+// número do passo de cada tipo de sala (pros botões ❓ da tela online)
+const TUT_STEP = {open: 1, link: 2, join: 3, password: 4};
 let tutStep = 0;
-function openTutorial(){
-  tutStep = 0;
+function openTutorial(step){
+  tutStep = Number.isInteger(step) ? step : 0;   // vindo de um clique, step é o evento: começa do início
   $('#tutNever').checked = skipTutorial;
   showScreen('#tutorial');
   renderTutorial();
@@ -2135,6 +2146,11 @@ $('#tutPrev').addEventListener('click', () => {
 });
 $('#tutSkip').addEventListener('click', closeTutorial);
 $('#tutHelp').addEventListener('click', openTutorial);
+// ❓ ao lado das opções: "Criar sala" abre a explicação do tipo escolhido (link ou senha)
+document.querySelectorAll('.qBtn').forEach(b => b.addEventListener('click', () => {
+  const k = b.dataset.tut === 'create' ? $('#roomType').value : b.dataset.tut;
+  openTutorial(TUT_STEP[k]);
+}));
 
 // fechou a página: libera a sala no servidor na hora
 addEventListener('pagehide', () => { if (Net.peer) Net.peer.destroy(); });
