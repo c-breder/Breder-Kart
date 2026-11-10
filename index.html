@@ -312,6 +312,7 @@ const CHARS = [
   {name:'Davi',       file:'Davi',       eye:EYE_G, hair:BLOND, shirt:'#2f6fdb', boy:true},
   {name:'Sophia',     file:'Sophia',     eye:'#7f9c86', hair:'#45302a', shirt:'#a8655a'},
   {name:'João Victor', file:'João Victor', eye:'#3d7fd1', hair:'#a8843f', shirt:'#f4f4f4', boy:true},
+  {name:'Julia',      file:'Julia',      eye:EYE_B, hair:BROWN, shirt:'#8e44d6'},
 ];
 CHARS.forEach(c => c.kart = '#888888');   // cor provisória; a de verdade é sorteada a cada corrida
 
@@ -1577,7 +1578,7 @@ function onlineMsg(t){ $('#onlineMsg').textContent = t; if (t) netLog('tela:', t
 function lobbyStatus(t){ $('#lobbyStatus').textContent = t; netLog('tela:', t); }
 
 // registro da conexão: vai pro Console (F12) e pro painel "📋 Registro da conexão"
-const GAME_VERSION = '2026-11-10 i';   // aumentar a cada mudança, pra saber se o aparelho pegou a versão nova
+const GAME_VERSION = '2026-11-10 j';   // aumentar a cada mudança, pra saber se o aparelho pegou a versão nova
 const NET_LOG = ['Breder Kart versão ' + GAME_VERSION];
 if (TURN_USERNAME.startsWith('COLE_AQUI')) NET_LOG.push('⚠️ TURN sem senha: cole o username e a credential da Metered no index.html');
 function netLog(...a){
@@ -2127,6 +2128,9 @@ if (linkRoom){
   showScreen('#onlineMenu');
   onlineMsg('Convite recebido! Toque em ENTRAR.');
 }
+
+// só pra testes automáticos: com ?debug no endereço, o estado do jogo fica em window.BK
+if (new URLSearchParams(location.search).has('debug')) window.BK = {Race, Net, keys, aiControl, useItem, boxes};
 
 /* ============================================================
    18. Loop principal

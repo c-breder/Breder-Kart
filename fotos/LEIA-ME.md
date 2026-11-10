@@ -12,6 +12,7 @@ Coloque aqui uma foto de cada pessoa. O nome do arquivo precisa ser **exatamente
 | Davi | `Davi.jpg` |
 | Sophia | `Sophia.jpg` |
 | João Victor | `João Victor.jpg` |
+| Julia | `Julia.jpg` |
 
 Também funcionam `.jpeg`, `.png` e `.webp`, em minúsculas ou maiúsculas (ex.: `Davi.PNG`).
 
