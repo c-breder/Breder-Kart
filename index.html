@@ -320,7 +320,8 @@ const CHARS = [
   {name:'Davi',       file:'Davi',       eye:EYE_G, hair:BLOND, shirt:'#2f6fdb', boy:true},
   {name:'Sophia',     file:'Sophia',     eye:'#7f9c86', hair:'#45302a', shirt:'#a8655a'},
   {name:'João Victor', file:'João Victor', eye:'#3d7fd1', hair:'#a8843f', shirt:'#f4f4f4', boy:true},
-  {name:'Julia',      file:'Julia',      eye:EYE_B, hair:BROWN, shirt:'#8e44d6'},
+  // cabelo castanho com pontas loiras (tip), cores tiradas de fotos/Julia.jpeg; blusa roxa
+  {name:'Julia',      file:'Julia',      eye:'#5a3a24', hair:'#6b4a2e', tip:'#d8b07a', shirt:'#8e44d6'},
 ];
 CHARS.forEach(c => c.kart = '#888888');   // cor provisória; a de verdade é sorteada a cada corrida
 
@@ -463,6 +464,8 @@ function portraitSVG(c){
         col = (y>8 && cv < 0.25 + y*0.025)
           ? (cv<0.12 ? shade(c.tip,0.2) : c.tip)
           : ((x+y)%2 ? c.hair : (cv>0.6 ? '#24160e' : '#4a301c'));
+      } else if (c.tip && y > g.length*0.45 && hash(x*5+3, y*3+1) < 0.2 + (y/g.length)*0.6){
+        col = v < 0.3 ? shade(c.tip, 0.15) : c.tip;   // pontas mais claras (luzes), mais pra baixo do cabelo
       }
     } else if (ch === 'T'){
       const v = hash(x+7,y);
@@ -1593,7 +1596,7 @@ function onlineMsg(t){ $('#onlineMsg').textContent = t; if (t) netLog('tela:', t
 function lobbyStatus(t){ $('#lobbyStatus').textContent = t; netLog('tela:', t); }
 
 // registro da conexão: vai pro Console (F12) e pro painel "📋 Registro da conexão"
-const GAME_VERSION = '2026-11-10 k';   // aumentar a cada mudança, pra saber se o aparelho pegou a versão nova
+const GAME_VERSION = '2026-11-10 l';   // aumentar a cada mudança, pra saber se o aparelho pegou a versão nova
 const NET_LOG = ['Breder Kart versão ' + GAME_VERSION];
 if (TURN_USERNAME.startsWith('COLE_AQUI')) NET_LOG.push('⚠️ TURN sem senha: cole o username e a credential da Metered no index.html');
 function netLog(...a){
