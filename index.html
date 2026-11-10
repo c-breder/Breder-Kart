@@ -11,16 +11,12 @@
 <title>Breder Kart</title>
 <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;800&display=swap" rel="stylesheet">
 <style>
-/* ===== Reset / base ===== */
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none}
 html,body{margin:0;height:100%;overflow:hidden;background:#8fd3ff;font-family:'Baloo 2',system-ui,sans-serif;touch-action:none}
-#game{position:fixed;inset:0;width:100vw;height:100vh;display:block}
+/* inset:0 em vez de 100vw/100vh: no iPhone o 100vh às vezes é a altura de "em pé" e a imagem fica achatada */
+#game{position:fixed;inset:0;width:100%;height:100%;display:block}
 .hidden{display:none!important}
-
-/* ===== Texto com contorno ===== */
 .out{color:#fff;text-shadow:0 3px 0 #1d2340,2px 0 0 #1d2340,-2px 0 0 #1d2340,0 -2px 0 #1d2340,2px 2px 0 #1d2340,-2px 2px 0 #1d2340}
-
-/* ===== HUD ===== */
 #hud{position:fixed;inset:0;pointer-events:none}
 #lapBox{position:absolute;top:10px;left:12px;line-height:1}
 #lap{font-size:26px;font-weight:800}
@@ -43,7 +39,6 @@ html,body{margin:0;height:100%;overflow:hidden;background:#8fd3ff;font-family:'B
 #bDown{width:64px;height:64px;font-size:24px}
 #bItem{width:66px;height:66px;font-size:32px}
 #bHonk{width:48px;height:48px;font-size:20px}
-/* celular deitado: tela baixa, botões menores pra não cobrir a pista */
 @media (max-height:500px){
   #touch{padding-top:8px;padding-bottom:max(10px,env(safe-area-inset-bottom))}
   #bL,#bR,#bUp{width:66px;height:66px;font-size:26px}
@@ -51,12 +46,8 @@ html,body{margin:0;height:100%;overflow:hidden;background:#8fd3ff;font-family:'B
   #bItem{width:56px;height:56px;font-size:26px}
   #bHonk{width:42px;height:42px;font-size:17px}
 }
-
-/* ===== Aviso pra girar o celular ===== */
 #rotate{display:none;position:fixed;inset:0;z-index:50;align-items:center;justify-content:center;text-align:center;padding:20px;font-size:34px;font-weight:800;background:linear-gradient(180deg,#ff78aa,#5a50dc)}
 @media (orientation:portrait){ body.touch #rotate{display:flex} }
-
-/* ===== Menu / overlays ===== */
 .rivals{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:6px}
 .chip{font-family:inherit;font-size:17px;font-weight:800;border-radius:999px;padding:4px 16px;border:3px solid #fff;background:rgba(255,255,255,.45);color:#000;opacity:.6;cursor:pointer}
 .chip.on{background:#fff;color:#000;opacity:1}
@@ -64,7 +55,6 @@ html,body{margin:0;height:100%;overflow:hidden;background:#8fd3ff;font-family:'B
 .chip .dot{display:inline-block;width:12px;height:12px;border-radius:50%;margin-right:6px;vertical-align:middle}
 #mute{position:fixed;bottom:12px;left:50%;transform:translateX(-50%);pointer-events:auto;background:rgba(255,255,255,.4);border:3px solid #fff;border-radius:12px;font-size:20px;padding:2px 10px}
 body.touch #mute{bottom:auto;top:88px;left:12px;transform:none}
-
 .overlay{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:16px;background:linear-gradient(180deg,rgba(255,120,170,.55),rgba(90,80,220,.55));overflow:auto}
 .overlay>:first-child{margin-top:auto}.overlay>:last-child{margin-bottom:auto}
 h1{margin:0;font-size:clamp(40px,9vw,72px);line-height:1}
@@ -81,7 +71,6 @@ select{font-family:inherit;font-size:17px;font-weight:800;border-radius:10px;bor
 .big:active{transform:translateY(4px);box-shadow:0 2px 0 #c48b00}
 .big.alt{background:#fff;box-shadow:0 6px 0 #aab;font-size:22px}
 .hint{font-size:15px;font-weight:600;text-align:center;margin-top:14px;max-width:520px}
-/* aviso do iPhone: adicionar à Tela de Início pra jogar em tela cheia */
 #iosHint{position:relative;background:rgba(255,255,255,.92);color:#1d2340;border-radius:14px;padding:8px 34px 8px 14px;margin:0 0 12px;max-width:560px;font-size:15px;font-weight:600;text-align:center;box-shadow:0 4px 0 rgba(29,35,64,.25)}
 #iosHintClose{position:absolute;top:4px;right:6px;border:none;background:none;font-size:18px;font-weight:800;color:#1d2340;cursor:pointer}
 #resList,#lobbyList{background:rgba(255,255,255,.92);border-radius:20px;padding:10px 18px;min-width:280px;margin-top:10px}
@@ -97,22 +86,17 @@ select{font-family:inherit;font-size:17px;font-weight:800;border-radius:10px;bor
 .overlay input{font-family:inherit;font-size:17px;font-weight:800;border-radius:10px;border:3px solid #fff;padding:2px 8px;width:170px;color:#000;background:#fff;user-select:text;-webkit-user-select:text}
 .big:disabled{opacity:.5;cursor:default;transform:none}
 .overlay input[type=checkbox]{width:auto;vertical-align:middle}
-/* ❓ pequeno ao lado de cada opção do online: abre o tutorial na explicação dela */
 .qBtn{width:34px;height:34px;border-radius:50%;border:3px solid #fff;background:rgba(255,255,255,.45);font-size:16px;line-height:1;padding:0;cursor:pointer;vertical-align:middle;margin-top:16px}
 .row .qBtn{margin-top:0}
 .big.small{font-size:16px;padding:4px 16px;box-shadow:0 4px 0 #aab}
-/* registro da conexão na tela (pra investigar no celular, sem Console) */
 #netLogBox{position:fixed;left:8px;right:8px;bottom:8px;max-height:45vh;overflow:auto;margin:0;padding:8px 10px;background:rgba(0,0,0,.88);color:#9f9;font:12px/1.35 monospace;border-radius:10px;z-index:60;white-space:pre-wrap;user-select:text;-webkit-user-select:text}
-/* tutorial do online */
 #tutBox{background:rgba(255,255,255,.92);border-radius:20px;padding:12px 22px 14px;max-width:540px;color:#1d2340;text-align:center}
 #tutIcon{font-size:48px;line-height:1.1}
 #tutBox h2{margin:2px 0 6px;font-size:28px}
 #tutBox p{margin:0;font-size:18px;font-weight:600}
 #tutDots{margin-top:8px;font-size:16px;letter-spacing:4px;color:#d6247a}
-/* sala de espera: cartões menores pra caber no celular deitado */
 #lobbyCards{display:flex;gap:22px 8px;flex-wrap:wrap;justify-content:center;margin-top:6px;padding-top:12px}
 #lobbyCards .card{width:100px;padding:6px 6px 8px;border-radius:16px;position:relative}
-/* coroa em cima do cartão do dono da sala */
 .card .crown{position:absolute;top:-20px;left:50%;transform:translateX(-50%) rotate(-12deg);font-size:30px;line-height:1;filter:drop-shadow(0 2px 0 #1d2340)}
 #lobbyCards .card svg{width:84px;margin:0 auto 4px}
 #lobbyCards .card .ph{width:84px;height:100px;margin:0 auto 4px}
@@ -124,7 +108,6 @@ select{font-family:inherit;font-size:17px;font-weight:800;border-radius:10px;bor
 <body>
 <canvas id="game"></canvas>
 
-<!-- HUD -->
 <div id="hud" class="hidden">
   <div id="lapBox" class="out"><div id="lap">VOLTA 1/3</div><div id="time">0:00.00</div></div>
   <div id="itemBox"><span id="itemIcon"></span></div>
@@ -139,10 +122,8 @@ select{font-family:inherit;font-size:17px;font-weight:800;border-radius:10px;bor
   <button id="mute">🔊</button>
 </div>
 
-<!-- Aviso pra girar o celular (só aparece em pé) -->
 <div id="rotate" class="out">Gire o celular 🔄</div>
 
-<!-- Abertura: offline ou online -->
 <div id="start" class="overlay">
   <h1 class="out">Breder Kart 🏁</h1>
   <div class="sub out">Como você quer jogar?</div>
@@ -152,7 +133,6 @@ select{font-family:inherit;font-size:17px;font-weight:800;border-radius:10px;bor
   </div>
 </div>
 
-<!-- Menu -->
 <div id="menu" class="overlay hidden">
   <h1 class="out">Breder Kart 🏁</h1>
   <div class="sub out">Escolha quem você vai ser e contra quem quer correr!</div>
@@ -176,12 +156,14 @@ select{font-family:inherit;font-size:17px;font-weight:800;border-radius:10px;bor
     &nbsp; Voltas:
     <select id="laps"><option>1</option><option>2</option><option selected>3</option><option>5</option></select>
   </div>
+  <div class="row out">Pista:
+    <select id="track"><option value="campo">Campo Florido 🌳</option><option value="castelo">Castelo de Lava 🔥</option></select>
+  </div>
   <button id="go" class="big">CORRER!</button>
   <button id="menuBack" class="big alt">Voltar</button>
   <div class="hint out" id="hint"></div>
 </div>
 
-<!-- Resultados -->
 <div id="results" class="overlay hidden">
   <h1 class="out" id="resTitle">Fim!</h1>
   <div id="resMsg" class="out"></div>
@@ -193,7 +175,6 @@ select{font-family:inherit;font-size:17px;font-weight:800;border-radius:10px;bor
   </div>
 </div>
 
-<!-- Online -->
 <div id="onlineMenu" class="overlay hidden">
   <h1 class="out">Jogar online 🌐</h1>
   <div class="sub out">Até 5 pessoas por sala</div>
@@ -228,10 +209,8 @@ select{font-family:inherit;font-size:17px;font-weight:800;border-radius:10px;bor
   <button class="big alt small logBtn">📋 Registro da conexão</button>
 </div>
 
-<!-- Registro da conexão (toque pra fechar) -->
 <pre id="netLogBox" class="hidden"></pre>
 
-<!-- Tutorial do online -->
 <div id="tutorial" class="overlay hidden">
   <div id="tutBox">
     <div id="tutIcon"></div>
@@ -247,7 +226,6 @@ select{font-family:inherit;font-size:17px;font-weight:800;border-radius:10px;bor
   <button id="tutSkip" class="big alt">Pular tutorial</button>
 </div>
 
-<!-- Sala de espera -->
 <div id="lobby" class="overlay hidden">
   <h1 class="out">Sala de espera</h1>
   <div id="lobbyStatus" class="sub out"></div>
@@ -260,6 +238,8 @@ select{font-family:inherit;font-size:17px;font-weight:800;border-radius:10px;bor
   <div id="lobbyList"></div>
   <div id="lobbyHostBox" class="row out hidden">Voltas:
     <select id="lobbyLaps"><option>1</option><option>2</option><option selected>3</option><option>5</option></select>
+    &nbsp; Pista:
+    <select id="lobbyTrack"><option value="campo">Campo Florido 🌳</option><option value="castelo">Castelo de Lava 🔥</option></select>
   </div>
   <div class="btns">
     <button id="lobbyStart" class="big hidden">COMEÇAR!</button>
@@ -274,9 +254,9 @@ select{font-family:inherit;font-size:17px;font-weight:800;border-radius:10px;bor
 (function(){
 'use strict';
 
-/* ============================================================
-   0. Utilitários
-   ============================================================ */
+
+//   0. Utilitários
+
 const $ = s => document.querySelector(s);
 const clamp = (v,a,b) => Math.max(a, Math.min(b, v));
 const lerp  = (a,b,t) => a + (b-a)*t;
@@ -287,9 +267,9 @@ const pick = arr => arr[Math.random()*arr.length|0];
 const isTouch = matchMedia('(pointer:coarse)').matches || ('ontouchstart' in window);
 if (isTouch) document.body.classList.add('touch');
 
-/* ============================================================
-   1. Persistência
-   ============================================================ */
+
+//   1. Persistência
+
 const PREFS_KEY = 'kart-breder-v1';
 function loadPrefs(){
   try {
@@ -299,8 +279,9 @@ function loadPrefs(){
       rivais:  Array.isArray(raw.rivais) ? raw.rivais : null,
       modo:    raw.modo || null,
       semTutorial: !!raw.semTutorial,
+      pista:   raw.pista || 'campo',
     };
-  } catch { return {escolha:0, rivais:null, modo:null, semTutorial:false}; }
+  } catch { return {escolha:0, rivais:null, modo:null, semTutorial:false, pista:'campo'}; }
 }
 function savePrefs(){
   try {
@@ -308,6 +289,7 @@ function savePrefs(){
       escolha: chosen,
       rivais:  rivals,
       modo:    $('#diff').value,
+      pista:   $('#track').value,
       semTutorial: skipTutorial,
     }));
   } catch {}
@@ -315,9 +297,8 @@ function savePrefs(){
 const prefs = loadPrefs();
 let skipTutorial = prefs.semTutorial;   // marcou "Não mostrar mais" no tutorial do online
 
-/* ============================================================
-   2. Personagens
-   ============================================================ */
+//  2. Personagens
+
 const BROWN='#6b4226', BLOND='#e2b850', EYE_B='#6a3a20', EYE_G='#3f9a4e';
 const CHARS = [
   {name:'Anne Elise', file:'Anne Elise', eye:EYE_B, hair:BROWN, shirt:'#ff6fae'},
@@ -339,9 +320,9 @@ if (!(chosen >= 0 && chosen < CHARS.length)) chosen = 0;
 let rivals = prefs.rivais && prefs.rivais.length === CHARS.length ? prefs.rivais : CHARS.map(() => false);
 if (rivals.filter(Boolean).length > MAX_RIVALS) rivals = CHARS.map(() => false);
 
-/* ============================================================
-   3. Sprites pixel-art (SVG)
-   ============================================================ */
+
+//   3. Sprites pixel-art (SVG)
+
 function shade(hex, f){
   let n = parseInt(hex.slice(1),16);
   let r = n>>16, g = n>>8 & 255, b = n & 255;
@@ -576,9 +557,9 @@ $('#mute').addEventListener('click', () => {
   if (engGain) engGain.gain.value = 0;
 });
 
-/* ============================================================
-   5. Three.js — cena base
-   ============================================================ */
+
+//   5. Three.js 
+
 const renderer = new THREE.WebGLRenderer({canvas:$('#game'), antialias:true});
 renderer.setPixelRatio(Math.min(window.devicePixelRatio||1, 2));
 const scene = new THREE.Scene();
@@ -586,12 +567,21 @@ scene.background = new THREE.Color(0x8fd3ff);
 scene.fog = new THREE.Fog(0x8fd3ff, 140, 460);
 const camera = new THREE.PerspectiveCamera(70, 1, 0.1, 1500);
 
+// usa o tamanho de verdade do canvas na tela (no iPhone o innerWidth/innerHeight pode vir atrasado ao girar)
+let viewW = 0, viewH = 0;
 function resize(){
-  renderer.setSize(innerWidth, innerHeight, false);
-  camera.aspect = innerWidth / innerHeight;
+  const c = renderer.domElement;
+  const w = c.clientWidth || innerWidth, h = c.clientHeight || innerHeight;
+  if (!w || !h) return;
+  viewW = w; viewH = h;
+  renderer.setSize(w, h, false);
+  camera.aspect = w / h;
   camera.updateProjectionMatrix();
 }
-addEventListener('resize', resize); resize();
+addEventListener('resize', resize);
+addEventListener('orientationchange', () => setTimeout(resize, 300));
+if (window.visualViewport) visualViewport.addEventListener('resize', resize);
+resize();
 
 scene.add(new THREE.HemisphereLight(0xffffff, 0x4f8a35, 0.9));
 const sun = new THREE.DirectionalLight(0xffffff, 0.7);
@@ -604,26 +594,44 @@ function canvasTex(w,h,draw){
 }
 const LM = (c,o) => new THREE.MeshLambertMaterial(Object.assign({color:c}, o||{}));
 
-/* ============================================================
-   6. Pista
-   ============================================================ */
-const RAW = [[0,40],[0,-60],[4,-110],[24,-140],[60,-150],[92,-132],[102,-98],[90,-66],[92,-34],[108,-6],[112,36],[96,72],[60,88],[22,80],[4,60]];
+
+//   6. Pista
+  
+// pistas: o traçado passa pelos pontos, em ordem (largada no 1º ponto)
+const TRACKS = {
+  campo: {name:'Campo Florido 🌳', lava:false,
+    raw:[[0,40],[0,-60],[4,-110],[24,-140],[60,-150],[92,-132],[102,-98],[90,-66],[92,-34],[108,-6],[112,36],[96,72],[60,88],[22,80],[4,60]]},
+  // inspirada nos castelos dos jogos de kart: retas e curvas em ângulo reto, lava em volta
+  castelo: {name:'Castelo de Lava 🔥', lava:true,
+    raw:[[0,30],[0,-80],[10,-100],[40,-100],[50,-90],[50,-40],[60,-30],[90,-30],[100,-40],[100,-90],[110,-100],[140,-100],
+         [150,-90],[150,80],[140,100],[100,100],[90,90],[90,40],[80,30],[60,30],[50,40],[50,90],[40,100],[10,100],[0,90],[0,60]],
+    // Pedrões: [x, z] no traçado, deslocamento pro lado e atraso (s) no sobe-e-desce
+    crushers:[[0,-35,-6,0],[0,-68,6,1.3],[150,-55,6,0.6],[150,0,-6,2],[150,50,0,3.1]]},
+};
+let trackId = 'campo', TRACK = TRACKS.campo;
 const SC = 1.6, N = 800;
 // largura: estreita no Difícil, larga no Fácil e no Médio
 const W_HARD = 17, W_WIDE = 25;
 const widthFor = mode => mode === 'dificil' ? W_HARD : W_WIDE;
 let W = W_HARD;
-const curve = new THREE.CatmullRomCurve3(RAW.map(p => new THREE.Vector3(p[0]*SC, 0, p[1]*SC)), true, 'centripetal');
 
+// pontos (P), direção (T) e lado (NR) ao longo da pista; refeitos ao trocar de pista
 const P = [], T = [], NR = [];
-for (let i=0;i<N;i++){
-  const u = i/N, p = curve.getPointAt(u), t = curve.getTangentAt(u).normalize();
-  P.push(p); T.push(t); NR.push(new THREE.Vector3(t.z, 0, -t.x));
+let LEN = 0, SEG = 0, minX = 0, maxX = 0, minZ = 0, maxZ = 0, CX = 0, CZ = 0, a0 = 0;
+function computeTrack(raw){
+  const curve = new THREE.CatmullRomCurve3(raw.map(p => new THREE.Vector3(p[0]*SC, 0, p[1]*SC)), true, 'centripetal');
+  P.length = T.length = NR.length = 0;
+  for (let i=0;i<N;i++){
+    const u = i/N, p = curve.getPointAt(u), t = curve.getTangentAt(u).normalize();
+    P.push(p); T.push(t); NR.push(new THREE.Vector3(t.z, 0, -t.x));
+  }
+  LEN = curve.getLength(); SEG = LEN/N;
+  minX = minZ = 1e9; maxX = maxZ = -1e9;
+  P.forEach(p => { minX=Math.min(minX,p.x); maxX=Math.max(maxX,p.x); minZ=Math.min(minZ,p.z); maxZ=Math.max(maxZ,p.z); });
+  CX = (minX+maxX)/2; CZ = (minZ+maxZ)/2;
+  a0 = Math.atan2(T[0].x, T[0].z);   // direção da largada
 }
-const LEN = curve.getLength(), SEG = LEN/N;
-let minX=1e9, maxX=-1e9, minZ=1e9, maxZ=-1e9;
-P.forEach(p => { minX=Math.min(minX,p.x); maxX=Math.max(maxX,p.x); minZ=Math.min(minZ,p.z); maxZ=Math.max(maxZ,p.z); });
-const CX = (minX+maxX)/2, CZ = (minZ+maxZ)/2;
+computeTrack(TRACK.raw);
 
 function nearestIdx(x, z, guess){
   let best = guess, bd = 1e18;
@@ -687,7 +695,6 @@ curbT.magFilter = curbT.minFilter = THREE.NearestFilter;
 curbT.wrapS = curbT.wrapT = THREE.RepeatWrapping;
 
 // largada
-const a0 = Math.atan2(T[0].x, T[0].z);
 const checker = canvasTex(160,24, g => {
   for (let x=0;x<20;x++) for (let y=0;y<3;y++){
     g.fillStyle = (x+y)%2 ? '#111' : '#fff';
@@ -749,22 +756,129 @@ function stands(){
   }
 }
 
-// refaz tudo que depende da largura (W): asfalto, zebras, areia, largada, pórtico e arquibancadas
+/* --- Castelo de Lava: piso de pedra, zebra amarela e preta, muralha, tochas e Pedrões --- */
+const stoneT = canvasTex(128,128, (g,w,h) => {
+  g.fillStyle = '#6e6a72'; g.fillRect(0,0,w,h);
+  for (let row=0; row<8; row++){
+    const off = row%2 ? 16 : 0;
+    for (let x=-32; x<w; x+=32){
+      const v = 95 + Math.random()*40 | 0;
+      g.fillStyle = `rgb(${v},${v-4},${v+4})`;
+      g.fillRect(x+off+1, row*16+1, 30, 14);
+    }
+  }
+  for (let i=0;i<900;i++){ g.fillStyle = 'rgba(0,0,0,.12)'; g.fillRect(Math.random()*w, Math.random()*h, 2, 2); }
+});
+stoneT.wrapS = stoneT.wrapT = THREE.RepeatWrapping;
+stoneT.anisotropy = renderer.capabilities.getMaxAnisotropy();
+const curbLavaT = canvasTex(2,2, g => {
+  g.fillStyle = '#f2b632'; g.fillRect(0,0,2,1);
+  g.fillStyle = '#2b2b30'; g.fillRect(0,1,2,1);
+});
+curbLavaT.magFilter = curbLavaT.minFilter = THREE.NearestFilter;
+curbLavaT.wrapS = curbLavaT.wrapT = THREE.RepeatWrapping;
+const lavaT = canvasTex(256,256, (g,w,h) => {
+  g.fillStyle = '#c4260c'; g.fillRect(0,0,w,h);
+  for (let i=0;i<60;i++){
+    const x = Math.random()*w, y = Math.random()*h, r = 8 + Math.random()*26;
+    const gr = g.createRadialGradient(x,y,0, x,y,r);
+    gr.addColorStop(0, Math.random()<0.5 ? '#ffd23f' : '#ff8a1f'); gr.addColorStop(1, 'rgba(255,90,20,0)');
+    g.fillStyle = gr; g.fillRect(x-r, y-r, r*2, r*2);
+  }
+  for (let i=0;i<40;i++){ g.fillStyle = 'rgba(60,10,5,.35)'; g.beginPath(); g.arc(Math.random()*w, Math.random()*h, 3+Math.random()*9, 0, 7); g.fill(); }
+});
+lavaT.wrapS = lavaT.wrapT = THREE.RepeatWrapping;
+lavaT.repeat.set(40,40);
+
+// Pedrões: blocos de pedra que sobem e descem; quem estiver embaixo é amassado
+let crushers = [];
+const crusherFace = canvasTex(64,64, g => {
+  g.fillStyle = '#8d8892'; g.fillRect(0,0,64,64);
+  g.fillStyle = '#5e5a63'; g.fillRect(0,0,64,4); g.fillRect(0,60,64,4); g.fillRect(0,0,4,64); g.fillRect(60,0,4,64);
+  g.fillStyle = '#ffffff'; g.fillRect(12,20,14,12); g.fillRect(38,20,14,12);   // olhos
+  g.fillStyle = '#c4260c'; g.fillRect(17,24,6,6); g.fillRect(43,24,6,6);
+  g.fillStyle = '#2b2b30'; g.fillRect(10,14,18,4); g.fillRect(36,14,18,4);     // sobrancelhas bravas
+  g.fillRect(18,44,28,6);
+});
+crusherFace.magFilter = THREE.NearestFilter;
+function castleProps(){
+  const wallM = LM(0x57525c), torchM = new THREE.MeshBasicMaterial({color:0xffa21f});
+  // pilares com tocha dos dois lados da pista
+  const pillarG = new THREE.CylinderGeometry(1.2, 1.5, 7, 8), flameG = new THREE.ConeGeometry(0.7, 1.6, 7);
+  for (let i=20; i<N; i+=55) [-1,1].forEach(s => {
+    const x = P[i].x + NR[i].x*s*(W/2+SHOULDER()+2), z = P[i].z + NR[i].z*s*(W/2+SHOULDER()+2);
+    if (nearestGlobal(x, z).d < W/2 + SHOULDER() + 1) return;   // não põe pilar em cima de outro pedaço da pista
+    const p = new THREE.Mesh(pillarG, wallM); p.position.set(x, 3.5, z); trackGroup.add(p);
+    const f = new THREE.Mesh(flameG, torchM); f.position.set(x, 7.8, z); trackGroup.add(f);
+  });
+  // muralha em volta, com ameias
+  const m = 45, x0 = minX - m, x1 = maxX + m, z0 = minZ - m, z1 = maxZ + m;
+  [[x0,z0,x1,z0],[x1,z0,x1,z1],[x1,z1,x0,z1],[x0,z1,x0,z0]].forEach(([ax,az,bx,bz]) => {
+    const len = Math.hypot(bx-ax, bz-az), ang = Math.atan2(bx-ax, bz-az);
+    const w = new THREE.Mesh(new THREE.BoxGeometry(6, 16, len), wallM);
+    w.position.set((ax+bx)/2, 8, (az+bz)/2); w.rotation.y = ang; trackGroup.add(w);
+    for (let d=4; d<len; d+=10){
+      const c = new THREE.Mesh(new THREE.BoxGeometry(6, 3, 5), wallM);
+      c.position.set(ax + (bx-ax)*d/len, 17.5, az + (bz-az)*d/len); c.rotation.y = ang; trackGroup.add(c);
+    }
+  });
+  // Pedrões
+  crushers = (TRACK.crushers || []).map(([rx, rz, lat, delay]) => {
+    const i = nearestGlobal(rx*SC, rz*SC).i;
+    const x = P[i].x + NR[i].x*lat, z = P[i].z + NR[i].z*lat;
+    const side = LM(0x7d7882), face = LM(0xffffff, {map:crusherFace});
+    const mesh = new THREE.Mesh(new THREE.BoxGeometry(6, 6, 6), [side,side,side,side,face,face]);
+    mesh.position.set(x, 9, z); mesh.rotation.y = Math.atan2(T[i].x, T[i].z) + Math.PI;
+    const shadow = new THREE.Mesh(new THREE.PlaneGeometry(7, 7), new THREE.MeshBasicMaterial({color:0x000000, transparent:true, opacity:0.25, depthWrite:false}));
+    shadow.rotation.x = -Math.PI/2; shadow.position.set(x, 0.06, z);
+    trackGroup.add(mesh, shadow);
+    return {mesh, shadow, x, z, delay};
+  });
+}
+// altura do Pedrão no tempo t: lá em cima, treme, cai, fica no chão e sobe de novo (ciclo de 4 s)
+function crusherY(t){
+  const c = ((t % 4) + 4) % 4;
+  if (c < 1.8) return 9;
+  if (c < 2.2) return 9 + Math.sin(c*60)*0.15;             // tremendo: vai cair!
+  if (c < 2.45) return 9 - (c - 2.2)/0.25 * 6;             // caindo
+  if (c < 3.2) return 3;                                   // no chão
+  return 3 + (c - 3.2)/0.8 * 6;                            // subindo
+}
+function updateCrushers(t){
+  crushers.forEach(c => {
+    const y = crusherY(t + c.delay);
+    c.mesh.position.y = y;
+    c.shadow.material.opacity = 0.15 + (9 - y)/6*0.45;     // a sombra escurece quando ele desce
+    if (Race.state !== 'race' && Race.state !== 'done') return;
+    if (y > 5.2) return;
+    Race.racers.forEach(r => {
+      if (r.remote) return;   // cada aparelho confere só o próprio kart
+      if (Math.abs(r.x - c.x) < 4 && Math.abs(r.z - c.z) < 4) hit(r, 'pedra');
+    });
+  });
+}
+
+// largura da beirada: no castelo é larga pra criança não cair na lava em toda curva
+const SHOULDER = () => TRACK.lava ? 7 : 3.2;
+// refaz tudo que depende da largura (W): asfalto, zebras, areia, largada, pórtico e enfeites
 const asphaltM = LM(0xffffff, {map:asphalt}), curbM = LM(0xffffff, {map:curbT}), sandM = LM(0xe9d48a), checkerM = LM(0xffffff, {map:checker});
 function buildTrack(w){
   scene.remove(trackGroup);
   trackGroup.traverse(o => { if (o.geometry) o.geometry.dispose(); });
   trackGroup = new THREE.Group(); scene.add(trackGroup);
   W = w;
+  crushers = [];
   ribbon(-W/2, W/2, 0.02, 14, asphaltM);
   ribbon( W/2,  W/2+1.8, 0.03, 5, curbM);
   ribbon(-W/2-1.8, -W/2, 0.03, 5, curbM);
-  ribbon( W/2+1.8,  W/2+3.2, 0.025, 8, sandM);
-  ribbon(-W/2-3.2, -W/2-1.8, 0.025, 8, sandM);
+  // beirada depois da zebra (areia no campo; no castelo, pedra larga antes da lava)
+  ribbon( W/2+1.8,  W/2+SHOULDER(), 0.025, 8, sandM);
+  ribbon(-W/2-SHOULDER(), -W/2-1.8, 0.025, 8, sandM);
   const sl = new THREE.Mesh(new THREE.PlaneGeometry(W, 2.4), checkerM);
   sl.rotation.order = 'YXZ'; sl.rotation.set(-Math.PI/2, a0, 0); sl.position.set(P[0].x, 0.05, P[0].z);
   trackGroup.add(sl);
-  gantry(); stands();
+  gantry();
+  if (TRACK.lava) castleProps(); else stands();
   // na 1ª chamada as caixas ainda não existem (boxes é declarado na seção 7)
   try { placeBoxes(); } catch (e) {}
 }
@@ -780,10 +894,16 @@ const grassT = canvasTex(256,256, (g,w,h) => {
 });
 grassT.wrapS = grassT.wrapT = THREE.RepeatWrapping;
 grassT.repeat.set(50,50);
-const grass = new THREE.Mesh(new THREE.PlaneGeometry(1400,1400), LM(0xffffff, {map:grassT}));
+const grassM = LM(0xffffff, {map:grassT});
+const lavaM = new THREE.MeshBasicMaterial({map:lavaT});   // lava brilha sozinha (não depende da luz)
+const grass = new THREE.Mesh(new THREE.PlaneGeometry(1400,1400), grassM);
 grass.rotation.x = -Math.PI/2;
 grass.position.set(CX, 0, CZ);
 scene.add(grass);
+
+// árvores e nuvens só aparecem no Campo Florido
+const treesGroup = new THREE.Group(), cloudsGroup = new THREE.Group();
+scene.add(treesGroup, cloudsGroup);
 
 // árvores
 (function trees(){
@@ -803,7 +923,7 @@ scene.add(grass);
     g.scale.set(s,s,s);
     const tr = new THREE.Mesh(trunkG, trunkM); tr.position.y = 1.5; g.add(tr);
     const lf = new THREE.Mesh(leafG, leafMs[placed % 3]); lf.position.y = 4.4; lf.scale.y = 0.9; g.add(lf);
-    scene.add(g); placed++;
+    treesGroup.add(g); placed++;
   }
 })();
 
@@ -822,13 +942,39 @@ scene.add(grass);
       c.add(s);
     }
     c.lookAt(CX, c.position.y, CZ);
-    scene.add(c);
+    cloudsGroup.add(c);
   }
 })();
 
-/* ============================================================
-   7. Caixas de item
-   ============================================================ */
+// troca o visual conforme a pista (céu, chão, piso, zebras, árvores)
+const hemi = scene.children.find(o => o.isHemisphereLight);
+let MENU_R = 190;   // raio da câmera girando no menu
+function applyTheme(){
+  const lava = TRACK.lava;
+  scene.background.set(lava ? 0x2b0d0d : 0x8fd3ff);
+  scene.fog.color.set(lava ? 0x3b1210 : 0x8fd3ff);
+  if (hemi) hemi.groundColor.set(lava ? 0x8a2a10 : 0x4f8a35);
+  grass.material = lava ? lavaM : grassM;
+  grass.position.set(CX, lava ? -0.8 : 0, CZ);   // lava mais funda que a pista (fosso de lava)
+  treesGroup.visible = cloudsGroup.visible = !lava;
+  asphaltM.map = lava ? stoneT : asphalt; asphaltM.needsUpdate = true;
+  curbM.map = lava ? curbLavaT : curbT;   curbM.needsUpdate = true;
+  sandM.color.set(lava ? 0x3d3a40 : 0xe9d48a);
+  MENU_R = Math.max(190, Math.max(maxX - minX, maxZ - minZ) * 0.7);
+}
+// troca de pista: refaz o traçado, o visual, a pista e o minimapa
+function setTrack(id){
+  if (!TRACKS[id]) id = 'campo';
+  if (id === trackId) return;
+  trackId = id; TRACK = TRACKS[id];
+  computeTrack(TRACK.raw);
+  applyTheme();
+  buildTrack(W);
+  drawMiniBase();
+}
+
+//   7. Caixas de item
+
 const qT = canvasTex(64,64, (g,w,h) => {
   g.fillStyle = 'rgba(255,255,255,.25)'; g.fillRect(0,0,w,h);
   g.strokeStyle = '#fff'; g.lineWidth = 6; g.strokeRect(3,3,w-6,h-6);
@@ -848,9 +994,9 @@ function placeBoxes(){
 }
 placeBoxes();
 
-/* ============================================================
-   8. Karts
-   ============================================================ */
+
+//   8. Karts
+
 const shadowT = canvasTex(64,64, (g,w,h) => {
   const r = g.createRadialGradient(32,32,4, 32,32,32);
   r.addColorStop(0, 'rgba(0,0,0,.45)');
@@ -953,9 +1099,9 @@ function buildKart(ch){
   return {g, body, wheels, flame, back, front};
 }
 
-/* ============================================================
-   9. Estado da corrida
-   ============================================================ */
+
+//   9. Estado da corrida
+
 const MAXS = 34, ACC = 21, SPIN = 1.1;
 const DIFF = {
   facil:   {skill:[0.86,0.84,0.82,0.80,0.78], ahead:0.80, behind:1.00, itemMin:3,   itemRand:4,   dodge:0.15},
@@ -986,9 +1132,9 @@ function toast(t){
   Race.toastT = 1.8;
 }
 
-/* ============================================================
-   10. Construção do grid e da corrida
-   ============================================================ */
+
+//   10. Construção do grid e da corrida
+
 // cor do kart: sorteada a cada corrida, longe da cor da roupa (matiz > 45°) e sem repetir
 const KART_COLORS = ['#e8322f','#ff8a2a','#f5cf2a','#9be22d','#19b38a','#20c4e8','#2f6fdb','#7a4dff','#c33cf0','#ff4f9a','#ffffff','#25252b','#8b5a2b'];
 function hueOf(hex){
@@ -1020,6 +1166,7 @@ function clearRace(){
 
 function startRace(){
   const mode = $('#diff').value;
+  setTrack($('#track').value);
   if (!CHARS.some((_,i) => i !== chosen && rivals[i])){
     $('#rivCount').animate(
       [{transform:'scale(1)'},{transform:'scale(1.25)'},{transform:'scale(1)'}],
@@ -1085,9 +1232,9 @@ function startRace(){
   placeCam(true, 0);
 }
 
-/* ============================================================
-   11. Controles
-   ============================================================ */
+
+//   11. Controles
+
 const keys = {};
 const touchS = {left:false, right:false, brake:false, gas:false};
 
@@ -1137,9 +1284,9 @@ function honk(){
   toast(near.length && !Race.online ? `${near[0].ch.name}: ${pick(AI_LINES)}` : 'BI BI! 📯');
 }
 
-/* ============================================================
-   12. Itens
-   ============================================================ */
+
+//   12. Itens
+
 function pickItem(r){
   const n = Race.racers.length;
   if (r.rank === 1) return pick(['banana','banana','tubarao','turbo']);
@@ -1229,7 +1376,8 @@ function hit(r, kind, by){
     SFX.hit();
     // tremidinha no celular (só Android; no iPhone não faz nada)
     try { if (navigator.vibrate) navigator.vibrate(200); } catch (_) {}
-    toast(kind === 'tubarao'
+    toast(kind === 'pedra' ? 'AMASSADO pelo Pedrão! 🪨😵'
+      : kind === 'tubarao'
       ? (by && !by.isP ? `O tubarãozinho da ${by.ch.name} te mordeu! 🦈😵` : 'MORDIDA! 🦈😵')
       : (by && by.isP ? 'Escorregou na própria banana 🍌🤡' : 'Escorregou! 🍌😵'));
   } else if (by && by.isP) hitByMeToast(r, kind);
@@ -1240,9 +1388,9 @@ function hitByMeToast(r, kind){
   toast(kind === 'tubarao' ? `Nhac! ${r.ch.name} foi ${r.ch.boy ? 'mordido' : 'mordida'}! 🦈😂` : `${r.ch.name} escorregou na sua banana! 🍌😂`);
 }
 
-/* ============================================================
-   13. Física
-   ============================================================ */
+
+//   13. Física
+
 function physics(r, dt, c){
   let {throttle, brake, steer} = c;
 
@@ -1255,7 +1403,17 @@ function physics(r, dt, c){
   }
 
   const idx = nearestIdx(r.x, r.z, r.idx);
-  const lat = (r.x - P[idx].x)*NR[idx].x + (r.z - P[idx].z)*NR[idx].z;
+  let lat = (r.x - P[idx].x)*NR[idx].x + (r.z - P[idx].z)*NR[idx].z;
+  // Castelo de Lava: passou da borda de pedra = caiu na lava; volta pro meio da pista, parado e rodando
+  if (TRACK.lava && Math.abs(lat) > W/2 + SHOULDER() + 0.3){
+    r.x = P[idx].x; r.z = P[idx].z; r.a = Math.atan2(T[idx].x, T[idx].z);
+    r.speed = 0; r.boost = 0; lat = 0;
+    if (r.spin <= 0) r.spin = SPIN;
+    if (r.isP){
+      SFX.hit(); toast('Caiu na lava! 🔥😵');
+      try { if (navigator.vibrate) navigator.vibrate(200); } catch (_) {}
+    }
+  }
   const off = Math.abs(lat) > W/2 + 1.4;   // fora da pista: velocidade máxima cai pra 45%
 
   let maxS = MAXS * r.maxMul;
@@ -1366,9 +1524,8 @@ function playerControl(){
   return {throttle: !!gas, brake: !!brake, steer: (R?1:0) - (L?1:0)};
 }
 
-/* ============================================================
-   14. Câmera
-   ============================================================ */
+//   14. Câmera
+
 const camT = new THREE.Vector3(), look = new THREE.Vector3();
 function placeCam(snap, dt){
   const p = Race.player;
@@ -1384,17 +1541,20 @@ function placeCam(snap, dt){
   camera.updateProjectionMatrix();
 }
 
-/* ============================================================
-   15. HUD / Minimapa
-   ============================================================ */
+
+//   15. HUD / Minimapa
+
 const mm = $('#minimap'), mctx = mm.getContext('2d');
-const mmScale = Math.min(200/(maxX-minX), 200/(maxZ-minZ));
+let mmScale = 1;
 const mmX = x => 120 + (x - CX)*mmScale;
 const mmY = z => 120 + (z - CZ)*mmScale;
 const mmBase = document.createElement('canvas');
 mmBase.width = mmBase.height = 240;
-(function drawMiniBase(){
+// desenho da pista no minimapa (refeito ao trocar de pista)
+function drawMiniBase(){
+  mmScale = Math.min(200/(maxX-minX), 200/(maxZ-minZ));
   const g = mmBase.getContext('2d');
+  g.clearRect(0, 0, 240, 240);
   g.lineCap = g.lineJoin = 'round';
   [['#1d2340',18],['#ffffff',11]].forEach(([c,w]) => {
     g.strokeStyle = c; g.lineWidth = w;
@@ -1402,7 +1562,8 @@ mmBase.width = mmBase.height = 240;
     P.forEach((p,i) => i ? g.lineTo(mmX(p.x), mmY(p.z)) : g.moveTo(mmX(p.x), mmY(p.z)));
     g.closePath(); g.stroke();
   });
-})();
+}
+drawMiniBase();
 function fmt(t){
   const m = Math.floor(t/60), s = t - m*60;
   return m + ':' + (s < 10 ? '0' : '') + s.toFixed(2);
@@ -1426,9 +1587,9 @@ function updateHUD(){
   });
 }
 
-/* ============================================================
-   16. Fim de corrida
-   ============================================================ */
+
+//   16. Fim de corrida
+
 function playerFinished(){
   Race.state = 'done';
   Race.doneT = 2.2;
@@ -1457,9 +1618,8 @@ function showResults(){
   $('#itemIcon').textContent = '';
 }
 
-/* ============================================================
-   17. Menu — cards / rivais
-   ============================================================ */
+//   17. Menu — cards / rivais
+
 function buildCards(){
   const box = $('#cards'); box.innerHTML = '';
   CHARS.forEach((c,i) => {
@@ -1508,7 +1668,6 @@ $('#hint').textContent = isTouch
   : 'Setas ou WASD pra dirigir · ESPAÇO lança o item (segurando ↓ a banana vai pra trás) · H buzina';
 
 // iPhone/iPad: o Safari não deixa site em tela cheia, só aberto pelo ícone da Tela de Início
-// (iPad novo se apresenta como Mac, por isso o teste do toque)
 const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 const isStandalone = navigator.standalone === true || matchMedia('(display-mode: standalone)').matches;
 $('#iosHint').classList.toggle('hidden', !isIOS || isStandalone);
@@ -1519,6 +1678,10 @@ if (prefs.modo && $('#diff').querySelector(`option[value="${prefs.modo}"]`)) $('
 const syncWidth = () => { const w = widthFor($('#diff').value); if (w !== W) buildTrack(w); };
 $('#diff').addEventListener('change', () => { syncWidth(); savePrefs(); });
 syncWidth();
+// pista salva; trocar a caixinha já mostra a pista nova girando no fundo
+if (TRACKS[prefs.pista]) $('#track').value = prefs.pista;
+setTrack($('#track').value);
+$('#track').addEventListener('change', () => { setTrack($('#track').value); savePrefs(); });
 
 $('#go').addEventListener('click', startRace);
 $('#again').addEventListener('click', startRace);
@@ -1548,21 +1711,18 @@ $('#roomType').addEventListener('change', () => {
   $('#newPass').classList.toggle('hidden', $('#roomType').value !== 'password');
 });
 
-/* ============================================================
-   17b. Online (PeerJS) — salas e conexão
-   ============================================================ */
+
+//   17b. Online (PeerJS) — salas e conexão
+
 const NET_PREFIX = 'breder-kart-';   // separa nossas salas das de outros sites no servidor do PeerJS
 const OPEN_ROOM = 'SALA-ABERTA';
 const MAX_PLAYERS = 5;
-// TEMPORÁRIO (1 semana, até ~17/11/2026): TURN grátis da Metered.
 // Trocar pelo TURN do servidor-casa e apagar a conta da Metered.
 const TURN_USERNAME   = '641d0e1df05b4da4a7d4c835'; 
 const TURN_CREDENTIAL = 'iLhwM67n0qOmpxII';
-// sempre pelo TURN: ninguém vê o IP de ninguém
 const NET_CONFIG = {
   iceServers: [{
     urls: [
-      // região Brasil (painel da Metered → Get credential → Show ICE Servers Array)
       'turn:br.relay.metered.ca:80',
       'turn:br.relay.metered.ca:80?transport=tcp',
       'turn:br.relay.metered.ca:443',
@@ -1584,6 +1744,7 @@ const Net = {
   me: 0,         // meu número na sala (1 = dono)
   players: [],   // [{num, host, ch}]; ch = personagem (-1 = ainda escolhendo)
   laps: 3,
+  track: 'campo',
   timer: 0,
 };
 
@@ -1603,15 +1764,15 @@ const roomLink = () => location.href.split(/[?#]/)[0] + '?sala=' + Net.room;
 function onlineMsg(t){ $('#onlineMsg').textContent = t; if (t) netLog('tela:', t); }
 function lobbyStatus(t){ $('#lobbyStatus').textContent = t; netLog('tela:', t); }
 
-// registro da conexão: vai pro Console (F12) e pro painel "📋 Registro da conexão"
-const GAME_VERSION = '2026-11-10 m';   // aumentar a cada mudança, pra saber se o aparelho pegou a versão nova
+// registro da conexão
+const GAME_VERSION = '2026-11-10 p';   // aumentar a cada mudança, pra saber se o aparelho pegou a versão nova
 const NET_LOG = ['Breder Kart versão ' + GAME_VERSION];
 if (TURN_USERNAME.startsWith('COLE_AQUI')) NET_LOG.push('⚠️ TURN sem senha: cole o username e a credential da Metered no index.html');
 function netLog(...a){
   const line = new Date().toLocaleTimeString() + ' ' + a.join(' ');
   console.log('%c[online]', 'color:#d6247a;font-weight:bold', line);
   NET_LOG.push(line);
-  if (NET_LOG.length > 80) NET_LOG.splice(1, 1);   // guarda a linha da versão
+  if (NET_LOG.length > 80) NET_LOG.splice(1, 1);  
   if (!$('#netLogBox').classList.contains('hidden')) showNetLog();
 }
 function showNetLog(){
@@ -1682,7 +1843,7 @@ function renderLobby(){
     list.appendChild(d);
   });
   list.classList.toggle('hidden', !n);
-  $('#lobbyCount').textContent = n ? n + '/' + MAX_PLAYERS + ' jogadores · ' + Net.laps + (Net.laps > 1 ? ' voltas' : ' volta') : '';
+  $('#lobbyCount').textContent = n ? n + '/' + MAX_PLAYERS + ' jogadores · ' + Net.laps + (Net.laps > 1 ? ' voltas' : ' volta') + ' · ' + TRACKS[Net.track].name : '';
 
   // cartões: o meu mostra o pixel art; os já escolhidos ficam apagados
   const box = $('#lobbyCards');
@@ -1722,11 +1883,11 @@ function chooseOnline(ch){
   else if (Net.host && Net.me) Net.host.send({t:'pick', ch});
 }
 
-// ---- dono da sala ----
+// dono da sala
 function hostRoom(code, pass, onTaken){
   netReset();
   const peer = new Peer(NET_PREFIX + code, {config: NET_CONFIG, debug: 2});
-  Object.assign(Net, {peer, isHost:true, room:code, pass, me:1, laps:+$('#lobbyLaps').value,
+  Object.assign(Net, {peer, isHost:true, room:code, pass, me:1, laps:+$('#lobbyLaps').value, track:$('#lobbyTrack').value,
     players:[{num:1, host:true, ch:chosen}]});
   showLobby('Abrindo a sala...');
   netLog('dono: registrando', code);
@@ -1818,7 +1979,7 @@ function pickChar(num, ch){
 }
 // manda o estado da sala (jogadores + voltas) pra todo mundo
 function sendRoom(){
-  Net.guests.forEach(g => g.conn.send({t:'room', list:Net.players, laps:Net.laps}));
+  Net.guests.forEach(g => g.conn.send({t:'room', list:Net.players, laps:Net.laps, track:Net.track}));
   renderLobby();
   dropMissingRacers();
 }
@@ -1833,6 +1994,12 @@ function joinRoom(code, pass, onMissing){
   peer.on('open', id => {
     netLog('convidado: ligado ao servidor como', id);
     if (Net.peer !== peer) return;
+    // ligou no servidor: agora o prazo é pro dono responder (o TURN pode demorar na internet lenta)
+    clearTimeout(Net.timer);
+    Net.timer = setTimeout(() => {
+      netLog('convidado: 30 s sem resposta do dono');
+      if (Net.peer === peer) netLeave('Não deu pra conectar. Tente de novo ou use outra rede (Wi-Fi).');
+    }, 30000);
     const conn = peer.connect(NET_PREFIX + code, {reliable:true});
     watchIce(conn, 'convidado');
     Net.host = conn;
@@ -1847,7 +2014,11 @@ function joinRoom(code, pass, onMissing){
         conn.send({t:'pick', ch:chosen});   // tenta o último personagem usado
       }
       else if (msg.t === 'refuse') netLeave(msg.why);
-      else if (msg.t === 'room'){ Net.players = msg.list; Net.laps = msg.laps; renderLobby(); dropMissingRacers(); }
+      else if (msg.t === 'room'){
+        Net.players = msg.list; Net.laps = msg.laps; Net.track = TRACKS[msg.track] ? msg.track : 'campo';
+        if (!Race.online) setTrack(Net.track);   // mostra no fundo a pista que o dono escolheu
+        renderLobby(); dropMissingRacers();
+      }
       else if (msg.t === 'go') startOnlineRace(msg);
       else if (msg.t === 's' && Race.online && Array.isArray(msg.k)){
         msg.k.forEach(s => { if (Array.isArray(s) && s[0] !== Net.me) netGotState(s); });
@@ -1864,10 +2035,10 @@ function joinRoom(code, pass, onMissing){
     if (Net.me && NET_DOWN.includes(err.type)) return;
     netLeave(netError(err));
   });
-  // sem resposta em 20 s: provavelmente o TURN não conseguiu ligar os dois
+  // 20 s sem nem ligar no servidor do PeerJS: internet fora ou muito lenta
   Net.timer = setTimeout(() => {
-    netLog('convidado: 20 s sem resposta do dono');
-    if (Net.peer === peer) netLeave('Não deu pra conectar. Tente de novo ou use outra rede (Wi-Fi).');
+    netLog('convidado: 20 s sem ligar no servidor');
+    if (Net.peer === peer) netLeave('Sem conexão com o servidor. Confira a internet e tente de novo.');
   }, 20000);
 }
 
@@ -1895,6 +2066,12 @@ $('#joinRoom').addEventListener('click', () => {
   joinRoom(code, $('#joinPass').value);
 });
 $('#lobbyLeave').addEventListener('click', () => netLeave(''));
+$('#lobbyTrack').addEventListener('change', () => {
+  if (!Net.isHost) return;
+  Net.track = $('#lobbyTrack').value;
+  setTrack(Net.track);
+  sendRoom();
+});
 $('#lobbyLaps').addEventListener('change', () => {
   if (!Net.isHost) return;
   Net.laps = +$('#lobbyLaps').value;
@@ -1903,18 +2080,14 @@ $('#lobbyLaps').addEventListener('change', () => {
 $('#lobbyStart').addEventListener('click', () => {
   if (Net.isHost) netStartRace();
 });
-
-// ---- corrida online ----
 // cada aparelho dirige o próprio kart e conta onde ele está;
 // o dono junta a posição de todo mundo e repassa pra todo mundo
 const NET_HZ = 12;      // posições por segundo (pouco, pra economizar o TURN)
 const INTERP = 0.15;    // mostra os outros 150 ms "atrasados" pra o movimento ficar liso
-
-// dono: sorteia as cores dos karts e dá a largada pra todos
 function netStartRace(){
   const list = Net.players.filter(p => p.ch >= 0).sort((a, b) => a.num - b.num);
   assignKartColors(list.map(p => CHARS[p.ch]));
-  const go = {t:'go', laps:Net.laps, list:list.map(p => ({num:p.num, ch:p.ch})), colors:list.map(p => CHARS[p.ch].kart)};
+  const go = {t:'go', laps:Net.laps, track:Net.track, list:list.map(p => ({num:p.num, ch:p.ch})), colors:list.map(p => CHARS[p.ch].kart)};
   Net.guests.forEach(g => g.conn.send(go));
   startOnlineRace(go);
 }
@@ -1926,6 +2099,7 @@ function startOnlineRace(go){
   Race.online = true; Race.netT = 0;
   Race.laps = go.laps;
   setResultButtons();
+  setTrack(go.track || 'campo');
   if (W !== W_WIDE) buildTrack(W_WIDE);
 
   go.list.forEach((p, k) => {
@@ -2042,7 +2216,7 @@ function netFollow(r, dt){
   kartVisual(r, dt, Math.abs(lat) > W/2 + 1.4);
 }
 
-// ---- itens no online ----
+// itens no online
 // cada um avisa o que fez (pegou caixa, lançou item, foi atingido); o dono repassa pros outros
 function netEvent(ev){
   if (!Race.online) return;
@@ -2164,16 +2338,19 @@ if (linkRoom){
 }
 
 // só pra testes automáticos: com ?debug no endereço, o estado do jogo fica em window.BK
-if (new URLSearchParams(location.search).has('debug')) window.BK = {Race, Net, keys, aiControl, useItem, boxes};
+if (new URLSearchParams(location.search).has('debug')) window.BK = {Race, Net, keys, aiControl, useItem, boxes, setTrack, get crushers(){ return crushers; }, get track(){ return trackId; }};
 
-/* ============================================================
-   18. Loop principal
-   ============================================================ */
+//   18. Loop principal
+
 let last = performance.now();
 
 function frame(now){
   const dt = Math.min(0.05, (now - last)/1000);
   last = now;
+
+  // a tela mudou de tamanho sem avisar (iPhone girando na Tela de Início): reajusta pra não achatar
+  const cv = renderer.domElement;
+  if (cv.clientWidth !== viewW || cv.clientHeight !== viewH) resize();
 
   // caixas de item animadas
   boxes.forEach(b => {
@@ -2187,6 +2364,12 @@ function frame(now){
     }
   });
 
+  // Castelo de Lava: lava escorrendo e Pedrões subindo e descendo (no menu, pelo relógio; na corrida, pelo tempo da corrida)
+  if (TRACK.lava){
+    lavaT.offset.x += dt*0.012; lavaT.offset.y += dt*0.006;
+    updateCrushers(Race.state === 'menu' ? now/1000 : Race.time);
+  }
+
   if (Race.toastT > 0){
     Race.toastT -= dt;
     if (Race.toastT <= 0) $('#toast').style.opacity = 0;
@@ -2195,7 +2378,7 @@ function frame(now){
 
   if (Race.state === 'menu'){
     Race.menuAng += dt*0.08;
-    camera.position.set(CX + Math.cos(Race.menuAng)*190, 85, CZ + Math.sin(Race.menuAng)*190);
+    camera.position.set(CX + Math.cos(Race.menuAng)*MENU_R, 85*MENU_R/190, CZ + Math.sin(Race.menuAng)*MENU_R);
     camera.lookAt(CX, 0, CZ);
     camera.fov = 60; camera.updateProjectionMatrix();
     if (engGain) engGain.gain.value = 0;
