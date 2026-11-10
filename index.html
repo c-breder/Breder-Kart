@@ -81,6 +81,9 @@ select{font-family:inherit;font-size:17px;font-weight:800;border-radius:10px;bor
 .big:active{transform:translateY(4px);box-shadow:0 2px 0 #c48b00}
 .big.alt{background:#fff;box-shadow:0 6px 0 #aab;font-size:22px}
 .hint{font-size:15px;font-weight:600;text-align:center;margin-top:14px;max-width:520px}
+/* aviso do iPhone: adicionar à Tela de Início pra jogar em tela cheia */
+#iosHint{position:relative;background:rgba(255,255,255,.92);color:#1d2340;border-radius:14px;padding:8px 34px 8px 14px;margin:0 0 12px;max-width:560px;font-size:15px;font-weight:600;text-align:center;box-shadow:0 4px 0 rgba(29,35,64,.25)}
+#iosHintClose{position:absolute;top:4px;right:6px;border:none;background:none;font-size:18px;font-weight:800;color:#1d2340;cursor:pointer}
 #resList,#lobbyList{background:rgba(255,255,255,.92);border-radius:20px;padding:10px 18px;min-width:280px;margin-top:10px}
 .resRow{display:flex;align-items:center;gap:10px;font-size:20px;font-weight:800;color:#1d2340;padding:4px 0}
 .resRow .p{width:42px;font-size:26px}
@@ -150,6 +153,11 @@ select{font-family:inherit;font-size:17px;font-weight:800;border-radius:10px;bor
 <div id="menu" class="overlay hidden">
   <h1 class="out">Breder Kart 🏁</h1>
   <div class="sub out">Escolha quem você vai ser e contra quem quer correr!</div>
+  <div id="iosHint" class="hidden">
+    📱 <b>No iPhone:</b> toque em <b>Compartilhar</b> (o quadrado com a setinha ⬆️) e depois em
+    <b>Adicionar à Tela de Início</b>. Abrindo pelo ícone, o jogo fica em <b>tela cheia</b>!
+    <button id="iosHintClose" aria-label="Fechar aviso">✕</button>
+  </div>
   <div id="cards"></div>
   <div class="row out" style="text-align:center">Correr contra:
     <div style="font-size:13px;font-weight:600">toque pra marcar ou desmarcar · até 3</div>
@@ -1488,6 +1496,13 @@ $('#hint').textContent = isTouch
   ? '▲ acelera · ▼ freia/ré · ◀ ▶ vira · 🎁 lança o item pra frente · 📯 buzina'
   : 'Setas ou WASD pra dirigir · ESPAÇO lança o item (segurando ↓ a banana vai pra trás) · H buzina';
 
+// iPhone/iPad: o Safari não deixa site em tela cheia, só aberto pelo ícone da Tela de Início
+// (iPad novo se apresenta como Mac, por isso o teste do toque)
+const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+const isStandalone = navigator.standalone === true || matchMedia('(display-mode: standalone)').matches;
+$('#iosHint').classList.toggle('hidden', !isIOS || isStandalone);
+$('#iosHintClose').addEventListener('click', () => $('#iosHint').classList.add('hidden'));
+
 // modo salvo + pista do menu já na largura do modo escolhido
 if (prefs.modo && $('#diff').querySelector(`option[value="${prefs.modo}"]`)) $('#diff').value = prefs.modo;
 const syncWidth = () => { const w = widthFor($('#diff').value); if (w !== W) buildTrack(w); };
@@ -1578,7 +1593,7 @@ function onlineMsg(t){ $('#onlineMsg').textContent = t; if (t) netLog('tela:', t
 function lobbyStatus(t){ $('#lobbyStatus').textContent = t; netLog('tela:', t); }
 
 // registro da conexão: vai pro Console (F12) e pro painel "📋 Registro da conexão"
-const GAME_VERSION = '2026-11-10 j';   // aumentar a cada mudança, pra saber se o aparelho pegou a versão nova
+const GAME_VERSION = '2026-11-10 k';   // aumentar a cada mudança, pra saber se o aparelho pegou a versão nova
 const NET_LOG = ['Breder Kart versão ' + GAME_VERSION];
 if (TURN_USERNAME.startsWith('COLE_AQUI')) NET_LOG.push('⚠️ TURN sem senha: cole o username e a credential da Metered no index.html');
 function netLog(...a){
